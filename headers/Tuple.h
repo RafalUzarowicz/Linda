@@ -32,8 +32,6 @@ public:
     ~Tuple() = default;
     Tuple(const Tuple&) = default;
 
-
-
     using EntriesVector = std::vector<TupleEntry>;
 
     template<typename T>
@@ -41,12 +39,15 @@ public:
         throw std::runtime_error("Wrong entry type!");
     }
 
-    const EntriesVector& getEntries(){ return entries; }
+    const EntriesVector& getEntries() const { return entries; }
+    std::string path() const { return treePath.str(); }
+    std::string to_string() const;
+
+    void clear(){ entries.clear(); }
 
     auto begin() { return entries.begin(); }
     auto end() { return entries.end(); }
 
-    std::string to_string() const;
 private:
     EntriesVector entries;
     std::stringstream treePath;

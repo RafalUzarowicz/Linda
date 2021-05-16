@@ -22,16 +22,19 @@ std::ostream& operator<<(std::ostream& stream, const TupleEntry& tupleEntry){
 template<>
 void Tuple::push<int>(int value){
     entries.emplace_back(value);
+    treePath << 'i';
 }
 
 template<>
 void Tuple::push<float>(float value){
     entries.emplace_back(value);
+    treePath << 'f';
 }
 
 template<>
 void Tuple::push<std::string>(std::string value){
     entries.emplace_back(value);
+    treePath << 's';
 }
 
 std::string Tuple::to_string() const{

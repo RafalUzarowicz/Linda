@@ -13,4 +13,5 @@ int main(){
     }
 
     std::cout<<t<<'\n';
+    std::cout<<t.path()<<'\n';
 }
