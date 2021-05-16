@@ -40,4 +40,13 @@ private:
     EntriesVector entries;
 };
 
+template<>
+void Tuple::push<int>(int value);
+
+template<>
+void Tuple::push<float>(float value);
+
+template<>
+void Tuple::push<std::string>(std::string value);
+
 std::ostream& operator<<(std::ostream& stream, const Tuple& tuple);
