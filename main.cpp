@@ -12,6 +12,5 @@ int main(){
         std::cout<<val<<'\n';
     }
 
-
     std::cout<<t<<'\n';
 }

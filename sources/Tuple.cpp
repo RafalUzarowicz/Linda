@@ -8,13 +8,13 @@ std::ostream& operator<<(std::ostream& stream, const TupleEntry& tupleEntry){
                     },
                     [](float f) {
                         std::string str = std::to_string(f);
-                        return std::string("f:")+str.erase(str.find_last_not_of("0") + 2, std::string::npos);
+                        return std::string("f:")+str.erase(str.find_last_not_of('0') + 2, std::string::npos);
                     },
                     [](std::string str) {
                         return "s:\""+str+"\"";
                     }
             },
-            tupleEntry.value
+            tupleEntry.getValue()
     );
     return stream;
 }
@@ -37,7 +37,7 @@ void Tuple::push<std::string>(std::string value){
 std::string Tuple::to_string() const{
     std::stringstream stringstream;
     stringstream << "(";
-    for( int i = 0, e = entries.size();; ++i ){
+    for( size_t i = 0, e = entries.size();; ++i ){
         stringstream << entries[i];
         if(i<e-1){
             stringstream<<", ";

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 #include <string>
 #include <stdexcept>
@@ -8,21 +9,31 @@
 
 class TupleEntry{
 public:
-
     using TupleValue = std::variant<int, float, std::string>;
-    TupleEntry(TupleValue value) : value(value){
 
+    explicit TupleEntry(TupleValue value = 0) : value(std::move(value)){}
+
+    [[nodiscard]] const TupleValue& getValue() const {
+        return value;
     }
+
+private:
     TupleValue value;
 };
 
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
-std::ostream& operator<<(std::ostream& stream, const TupleEntry& tupleEntry);
+std::ostream& operator<<(std::ostream&, const TupleEntry&);
 
 class Tuple {
 public:
+    Tuple() = default;
+    ~Tuple() = default;
+    Tuple(const Tuple&) = default;
+
+
+
     using EntriesVector = std::vector<TupleEntry>;
 
     template<typename T>
@@ -38,15 +49,16 @@ public:
     std::string to_string() const;
 private:
     EntriesVector entries;
+    std::stringstream treePath;
 };
 
 template<>
-void Tuple::push<int>(int value);
+void Tuple::push<int>(int);
 
 template<>
-void Tuple::push<float>(float value);
+void Tuple::push<float>(float);
 
 template<>
-void Tuple::push<std::string>(std::string value);
+void Tuple::push<std::string>(std::string);
 
-std::ostream& operator<<(std::ostream& stream, const Tuple& tuple);
+std::ostream& operator<<(std::ostream&, const Tuple&);
