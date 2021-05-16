@@ -3,14 +3,19 @@
 #include <utility>
 #include <variant>
 #include <string>
+#include <iostream>
 
-enum PatternEntryType{
+#include "Tuple.h"
+
+enum class PatternEntryType{
     Equal,
     Less,
     LessOrEqual,
     Greater,
     GreaterOrEqual
 };
+
+std::ostream& operator<<(std::ostream&, PatternEntryType);
 
 class PatternEntry{
 public:
@@ -23,10 +28,30 @@ private:
 
 class Pattern {
 public:
+    using PatternsVector = std::vector<PatternEntry>;
+
     Pattern() = default;
     ~Pattern() = default;
     Pattern(const Pattern& ) = default;
 
-    void add();
-};
+    template<PatternEntryType TYPE>
+    void add(int value){
+        std::cout<<TYPE<<" "<<value<<'\n';
+    }
 
+    template<PatternEntryType TYPE>
+    void add(float value){
+        std::cout<<TYPE<<" "<<value<<'\n';
+    }
+
+    template<PatternEntryType TYPE>
+    void add(const std::string& value){
+        std::cout<<TYPE<<" "<<value<<'\n';
+    }
+
+    bool check(Tuple) const;
+
+private:
+    PatternsVector patterns;
+    std::string treePath;
+};

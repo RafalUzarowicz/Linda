@@ -1,5 +1,23 @@
 #include "Tuple.h"
 
+std::ostream &operator<<(std::ostream& stream, TupleEntryType type) {
+    switch (type) {
+        case TupleEntryType::Int:
+            stream << "int";
+            break;
+        case TupleEntryType::Float:
+            stream << "float";
+            break;
+        case TupleEntryType::String:
+            stream << "string";
+            break;
+        case TupleEntryType::Unknown:
+            stream << "unknown";
+            break;
+    }
+    return stream;
+}
+
 std::ostream& operator<<(std::ostream& stream, const TupleEntry& tupleEntry){
     stream << std::visit(
             overloaded{
@@ -19,20 +37,22 @@ std::ostream& operator<<(std::ostream& stream, const TupleEntry& tupleEntry){
     return stream;
 }
 
-template<>
-void Tuple::push<int>(int value){
+Tuple::Tuple(const Tuple& tuple) {
+    entries = tuple.entries;
+    treePath << tuple.treePath.str();
+}
+
+void Tuple::push(int value){
     entries.emplace_back(value);
     treePath << 'i';
 }
 
-template<>
-void Tuple::push<float>(float value){
+void Tuple::push(float value){
     entries.emplace_back(value);
     treePath << 'f';
 }
 
-template<>
-void Tuple::push<std::string>(std::string value){
+void Tuple::push(std::string value){
     entries.emplace_back(value);
     treePath << 's';
 }
