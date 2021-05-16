@@ -8,7 +8,10 @@ int main(){
     t.push<float>(3.0f);
     t.push<std::string>("Tak");
 
-    for(auto& val : t.getEntries()){
+    for(auto& val : t){
         std::cout<<val<<'\n';
     }
+
+
+    std::cout<<t<<'\n';
 }

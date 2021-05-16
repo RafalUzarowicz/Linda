@@ -4,13 +4,16 @@
 #include <string>
 #include <stdexcept>
 #include <variant>
+#include <sstream>
 
 class TupleEntry{
 public:
-    TupleEntry(std::variant<int, float, std::string> value) : value(value){
+
+    using TupleValue = std::variant<int, float, std::string>;
+    TupleEntry(TupleValue value) : value(value){
 
     }
-    std::variant<int, float, std::string> value;
+    TupleValue value;
 };
 
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
@@ -19,10 +22,8 @@ template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 std::ostream& operator<<(std::ostream& stream, const TupleEntry& tupleEntry);
 
 class Tuple {
-    typedef std::vector<TupleEntry> EntriesVector;
-private:
-    EntriesVector entries;
 public:
+    using EntriesVector = std::vector<TupleEntry>;
 
     template<typename T>
     void push([[maybe_unused]] T value){
@@ -30,4 +31,13 @@ public:
     }
 
     const EntriesVector& getEntries(){ return entries; }
+
+    auto begin() { return entries.begin(); }
+    auto end() { return entries.end(); }
+
+    std::string to_string() const;
+private:
+    EntriesVector entries;
 };
+
+std::ostream& operator<<(std::ostream& stream, const Tuple& tuple);

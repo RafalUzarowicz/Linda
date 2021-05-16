@@ -3,14 +3,15 @@
 std::ostream& operator<<(std::ostream& stream, const TupleEntry& tupleEntry){
     stream << std::visit(
             overloaded{
-                    [](int b) {
-                        return std::string("int:")+std::to_string(b);
+                    [](int i) {
+                        return std::string("i:")+std::to_string(i);
                     },
-                    [](float b) {
-                        return std::string("float:")+std::to_string(b);
+                    [](float f) {
+                        std::string str = std::to_string(f);
+                        return std::string("f:")+str.erase(str.find_last_not_of("0") + 2, std::string::npos);
                     },
-                    [](std::string b) {
-                        return std::string("string:")+b;
+                    [](std::string str) {
+                        return "s:\""+str+"\"";
                     }
             },
             tupleEntry.value
@@ -31,4 +32,24 @@ void Tuple::push<float>(float value){
 template<>
 void Tuple::push<std::string>(std::string value){
     entries.emplace_back(value);
+}
+
+std::string Tuple::to_string() const{
+    std::stringstream stringstream;
+    stringstream << "(";
+    for( int i = 0, e = entries.size();; ++i ){
+        stringstream << entries[i];
+        if(i<e-1){
+            stringstream<<", ";
+        }else{
+            break;
+        }
+    }
+    stringstream << ")";
+    return stringstream.str();
+}
+
+std::ostream& operator<<(std::ostream& stream, const Tuple& tuple){
+    stream << tuple.to_string();
+    return stream;
 }
