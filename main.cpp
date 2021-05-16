@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Tuple.h"
+#include "Pattern.h"
 
 int main(){
     Tuple t;
@@ -14,4 +15,10 @@ int main(){
 
     std::cout<<t<<'\n';
     std::cout<<t.path()<<'\n';
+
+
+    Pattern p;
+
+//    p.add<
+
 }
