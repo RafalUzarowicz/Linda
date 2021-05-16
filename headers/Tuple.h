@@ -43,6 +43,8 @@ public:
         }
     }
 
+    std::string to_string() const;
+
 private:
     TupleValue value;
 };

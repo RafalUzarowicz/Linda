@@ -21,8 +21,17 @@ int main(){
     Pattern p;
 
     p.add<PatternEntryType::Equal>(2);
+    p.add<PatternEntryType::LessOrEqual>(3.0f);
+    p.add<PatternEntryType::Equal>("Tak");
+    p.add<PatternEntryType::Any>(TupleEntryType::Int);
+    p.add<PatternEntryType::Any>(TupleEntryType::Float);
+    p.add<PatternEntryType::Any>(TupleEntryType::String);
 
+    for(auto& val : p){
+        std::cout<<val.to_string()<<'\n';
+    }
 
+    std::cout<<p<<'\n';
 
     std::cout<<STRBOOL(p.check(t))<<'\n';
 }

@@ -19,7 +19,12 @@ std::ostream &operator<<(std::ostream& stream, TupleEntryType type) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const TupleEntry& tupleEntry){
-    stream << std::visit(
+    stream << tupleEntry.to_string();
+    return stream;
+}
+
+std::string TupleEntry::to_string() const {
+    return std::visit(
             overloaded{
                     [](int i) {
                         return std::string("i:")+std::to_string(i);
@@ -32,9 +37,8 @@ std::ostream& operator<<(std::ostream& stream, const TupleEntry& tupleEntry){
                         return "s:\""+str+"\"";
                     }
             },
-            tupleEntry.getValue()
+            value
     );
-    return stream;
 }
 
 Tuple::Tuple(const Tuple& tuple) {
