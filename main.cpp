@@ -2,11 +2,10 @@
 #include "Tuple.h"
 #include "Pattern.h"
 
-#define STRBOOL(x) (x == true ? "true" : "false")
+#define STR_BOOL(x) ((x) ? "true" : "false")
 
-int main(){
-    Tuple t;
-
+void testTuples(){
+    Linda::Tuple t;
     t.push(2);
     t.push(3.0f);
     t.push("Tak");
@@ -18,14 +17,14 @@ int main(){
     std::cout<<t<<'\n';
     std::cout<<t.path()<<'\n';
 
-    Pattern p;
+    Linda::Pattern p;
 
-    p.add<PatternEntryType::Equal>(2);
-    p.add<PatternEntryType::LessOrEqual>(3.0f);
-    p.add<PatternEntryType::Equal>("Tak");
-    p.add<PatternEntryType::Any>(TupleEntryType::Int);
-    p.add<PatternEntryType::Any>(TupleEntryType::Float);
-    p.add<PatternEntryType::Any>(TupleEntryType::String);
+    p.add<Linda::PatternEntryType::Equal>(2);
+    p.add<Linda::PatternEntryType::LessOrEqual>(3.0f);
+    p.add<Linda::PatternEntryType::Equal>("Tak");
+    p.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::Int);
+    p.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::Float);
+    p.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::String);
 
     for(auto& val : p){
         std::cout<<val.to_string()<<'\n';
@@ -33,5 +32,11 @@ int main(){
 
     std::cout<<p<<'\n';
 
-    std::cout<<STRBOOL(p.check(t))<<'\n';
+    std::cout << STR_BOOL(p.check(t)) << '\n';
+}
+
+int main(){
+    void (*fun)() = testTuples;
+
+    fun();
 }

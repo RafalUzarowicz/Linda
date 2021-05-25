@@ -1,31 +1,27 @@
 #include "Tuple.h"
 
-std::ostream &operator<<(std::ostream& stream, TupleEntryType type) {
+std::ostream &operator<<(std::ostream& stream, const Linda::TupleEntryType& type) {
     switch (type) {
-        case TupleEntryType::Int:
-            stream << "int";
-            break;
-        case TupleEntryType::Float:
-            stream << "float";
-            break;
-        case TupleEntryType::String:
-            stream << "string";
-            break;
-        case TupleEntryType::Unknown:
-            stream << "unknown";
-            break;
+        case Linda::TupleEntryType::Int:
+            return stream << "int";
+        case Linda::TupleEntryType::Float:
+            return stream << "float";
+        case Linda::TupleEntryType::String:
+            return stream << "string";
+        case Linda::TupleEntryType::Unknown:
+            return stream << "unknown";
     }
     return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const TupleEntry& tupleEntry){
+std::ostream& operator<<(std::ostream& stream, const Linda::TupleEntry& tupleEntry){
     stream << tupleEntry.to_string();
     return stream;
 }
 
-std::string TupleEntry::to_string() const {
+std::string Linda::TupleEntry::to_string() const {
     return std::visit(
-            overloaded{
+            operators{
                     [](int i) {
                         return std::string("i:")+std::to_string(i);
                     },
@@ -41,27 +37,27 @@ std::string TupleEntry::to_string() const {
     );
 }
 
-Tuple::Tuple(const Tuple& tuple) {
+Linda::Tuple::Tuple(const Tuple& tuple) {
     entries = tuple.entries;
     treePath << tuple.treePath.str();
 }
 
-void Tuple::push(int value){
+void Linda::Tuple::push(int value){
     entries.emplace_back(value);
     treePath << 'i';
 }
 
-void Tuple::push(float value){
+void Linda::Tuple::push(float value){
     entries.emplace_back(value);
     treePath << 'f';
 }
 
-void Tuple::push(std::string value){
+void Linda::Tuple::push(std::string value){
     entries.emplace_back(value);
     treePath << 's';
 }
 
-std::string Tuple::to_string() const{
+std::string Linda::Tuple::to_string() const{
     std::stringstream stringstream;
     stringstream << "(";
     for( size_t i = 0, e = entries.size();; ++i ){
@@ -76,7 +72,7 @@ std::string Tuple::to_string() const{
     return stringstream.str();
 }
 
-std::ostream& operator<<(std::ostream& stream, const Tuple& tuple){
+std::ostream& operator<<(std::ostream& stream, const Linda::Tuple& tuple){
     stream << tuple.to_string();
     return stream;
 }

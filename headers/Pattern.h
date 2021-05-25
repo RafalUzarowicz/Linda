@@ -1,8 +1,5 @@
 ﻿#pragma once
 
-//FIXME
-// - rewrite this cause its trash
-
 #include <utility>
 #include <variant>
 #include <string>
@@ -11,112 +8,115 @@
 
 #include "Tuple.h"
 
-enum class PatternEntryType{
-    Equal,
-    Less,
-    LessOrEqual,
-    Greater,
-    GreaterOrEqual,
-    Any
-};
+namespace Linda{
+    enum class PatternEntryType{
+        Equal,
+        Less,
+        LessOrEqual,
+        Greater,
+        GreaterOrEqual,
+        Any
+    };
 
-std::ostream& operator<<(std::ostream&, PatternEntryType);
+    class PatternEntry{
+    public:
+        using PatternValue = std::pair<PatternEntryType, Linda::TupleEntry::TupleValue>;
 
-class PatternEntry{
-public:
-    using PatternValue = std::pair<PatternEntryType, std::variant<int, float, std::string>>;
+        PatternEntry(PatternEntryType type, const std::variant<int, float, std::string>& value) : pattern(std::make_pair(type, value)){}
+        explicit PatternEntry(PatternValue patternValue) : pattern(std::move(patternValue)){}
+        ~PatternEntry() = default;
+        PatternEntry(const PatternEntry&);
 
-    PatternEntry(PatternEntryType type, std::variant<int, float, std::string> value) : pattern(std::make_pair(type, value)){}
-    explicit PatternEntry(PatternValue patternValue) : pattern(std::move(patternValue)){}
-    ~PatternEntry() = default;
+        [[nodiscard]] const PatternValue& getPattern() const;
 
-    [[nodiscard]] const PatternValue& getPattern() const {
-        return pattern;
-    }
-
-    [[nodiscard]] std::string to_string() const;
-
-private:
-    PatternValue pattern;
-};
-
-std::ostream& operator<<(std::ostream&, const PatternEntry&);
-
-class Pattern {
-public:
-    using PatternsVector = std::vector<PatternEntry>;
-
-    Pattern() = default;
-    ~Pattern() = default;
-    Pattern(const Pattern& ) = default;
-
-    template<PatternEntryType TYPE>
-    void add(int);
-
-    template<PatternEntryType TYPE>
-    void add(float);
-
-    template<PatternEntryType TYPE>
-    void add(const std::string&);
-
-    template<PatternEntryType TYPE>
-    void add(TupleEntryType);
-
-    bool check(Tuple) const;
-
-    const PatternsVector& getPatterns() const { return patterns; }
-    std::string path() const { return treePath.str(); }
-    std::string to_string() const;
-
-    void clear(){ patterns.clear(); }
-
-    auto begin() { return patterns.begin(); }
-    auto end() { return patterns.end(); }
-
-    friend std::ostream &operator<<(std::ostream &os, const Pattern &pattern);
-
-private:
-    PatternsVector patterns;
-    std::stringstream treePath;
-};
-
-template<PatternEntryType TYPE>
-void Pattern::add(int i) {
-    patterns.emplace_back(TYPE, i);
-    treePath << "i";
-}
-
-template<PatternEntryType TYPE>
-void Pattern::add(float f) {
-    patterns.emplace_back(TYPE, f);
-    treePath << "f";
-}
-
-template<PatternEntryType TYPE>
-void Pattern::add(const std::string& str) {
-    patterns.emplace_back(TYPE, str);
-    treePath << "s";
-}
-
-// FIXME: this is bad fix this pls
-template<PatternEntryType TYPE>
-void Pattern::add(TupleEntryType type) {
-    if(TYPE != PatternEntryType::Any){
-        throw std::runtime_error("Only Any type can skip value!");
-    }else{
-        switch (type) {
-            case TupleEntryType::Int:
-                patterns.emplace_back(TYPE, 0);
-                break;
-            case TupleEntryType::Float:
-                patterns.emplace_back(TYPE, 0.0f);
-                break;
-            case TupleEntryType::String:
-                patterns.emplace_back(TYPE, "");
-                break;
-            case TupleEntryType::Unknown:
-                // FIXME: WTF IS THAT KILL THIS
-                throw std::runtime_error("Unknown type!");
+        [[nodiscard]] const Linda::TupleEntry::TupleValue& getValue() const {
+            return pattern.second;
         }
+
+        [[nodiscard]] TupleEntryType getTupleType() const;
+
+        [[nodiscard]] PatternEntryType getType() const;
+
+        [[nodiscard]] std::string to_string() const;
+
+    private:
+        PatternValue pattern;
+    };
+
+    class Pattern {
+    public:
+        using PatternsVector = std::vector<PatternEntry>;
+
+        Pattern() = default;
+        ~Pattern() = default;
+        Pattern(const Pattern&);
+
+        template<PatternEntryType TYPE>
+        void add(int);
+
+        template<PatternEntryType TYPE>
+        void add(float);
+
+        template<PatternEntryType TYPE>
+        void add(const std::string&);
+
+        template<PatternEntryType TYPE>
+        void add(TupleEntryType);
+
+        bool check(const Tuple&) const;
+
+        const PatternsVector& getPatterns() const { return entries; }
+        std::string path() const { return treePath.str(); }
+        std::string to_string() const;
+
+        void clear(){ entries.clear(); treePath.clear(); }
+
+        PatternEntry& operator[](std::size_t index){ return entries[index]; }
+        const PatternEntry& operator[](std::size_t index) const { return entries[index]; }
+        size_t size() const { return entries.size(); }
+        auto begin() { return entries.begin(); }
+        auto end() { return entries.end(); }
+
+    private:
+        PatternsVector entries;
+        std::stringstream treePath;
+    };
+}
+
+template<Linda::PatternEntryType TYPE>
+void Linda::Pattern::add(int i) {
+    if (TYPE == PatternEntryType::Any) {
+        throw std::runtime_error("Can't use Any with specific value.");
+    }else{
+        entries.emplace_back(TYPE, i);
+        treePath << "i";
     }
 }
+
+template<Linda::PatternEntryType TYPE>
+void Linda::Pattern::add(float f) {
+    switch (TYPE) {
+        case PatternEntryType::Any:
+            throw std::runtime_error("Can't use Any with specific value.");
+        case PatternEntryType::Equal:
+            throw std::runtime_error("Can't use Equal on float value..");
+        default:
+            entries.emplace_back(TYPE, f);
+            treePath << "f";
+            break;
+    }
+}
+
+template<Linda::PatternEntryType TYPE>
+void Linda::Pattern::add(const std::string& str) {
+    if (TYPE == PatternEntryType::Any) {
+            throw std::runtime_error("Can't use Any with specific value.");
+    }else{
+        entries.emplace_back(TYPE, str);
+        treePath << "s";
+    }
+}
+
+std::ostream& operator<<(std::ostream&, const Linda::PatternEntryType&);
+std::ostream& operator<<(std::ostream&, const Linda::PatternEntry&);
+std::ostream& operator<<(std::ostream&, const Linda::Pattern&);
