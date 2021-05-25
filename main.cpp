@@ -4,7 +4,7 @@
 
 #define STR_BOOL(x) ((x) ? "true" : "false")
 
-void testTuples(){
+void testyRafalaXD(){
     Linda::Tuple t;
     t.push(2);
     t.push(3.0f);
@@ -36,7 +36,7 @@ void testTuples(){
 }
 
 int main(){
-    void (*fun)() = testTuples;
+    void (*fun)() = testyRafalaXD;
 
     fun();
 }
