@@ -10,6 +10,9 @@
 #include "Tuple.h"
 #include "ISerializable.h"
 
+//TODO:
+// - include maximum serialized length
+
 namespace Linda{
     enum class PatternEntryType{
         Equal,
@@ -22,9 +25,9 @@ namespace Linda{
 
     class PatternEntry{
     public:
-        using PatternValue = std::pair<PatternEntryType, Linda::TupleEntry::TupleValue>;
+        using PatternValue = std::pair<PatternEntryType, TupleEntry::TupleValue>;
 
-        PatternEntry(PatternEntryType type, const std::variant<int, float, std::string>& value) : pattern(std::make_pair(type, value)){}
+        PatternEntry(PatternEntryType type, const TupleEntry::TupleValue& value) : pattern(std::make_pair(type, value)){}
         explicit PatternEntry(PatternValue patternValue) : pattern(std::move(patternValue)){}
         ~PatternEntry() = default;
         PatternEntry(const PatternEntry&);
@@ -45,22 +48,23 @@ namespace Linda{
         PatternValue pattern;
     };
 
-    class Pattern {
+    class Pattern : public ISerializable {
     public:
         using PatternsVector = std::vector<PatternEntry>;
 
         Pattern() = default;
         ~Pattern() = default;
         Pattern(const Pattern&);
+        Pattern(const std::vector<ISerializable::serialization_type>&);
 
         template<PatternEntryType TYPE>
-        void add(int);
+        void add(TupleEntry::int_type);
 
         template<PatternEntryType TYPE>
-        void add(float);
+        void add(TupleEntry::float_type);
 
         template<PatternEntryType TYPE>
-        void add(const std::string&);
+        void add(const TupleEntry::string_type &);
 
         template<PatternEntryType TYPE>
         void add(TupleEntryType);
@@ -79,14 +83,32 @@ namespace Linda{
         auto begin() { return entries.begin(); }
         auto end() { return entries.end(); }
 
+        std::vector<serialization_type> serialize() override;
+
+        void deserialize(const std::vector<serialization_type> &vector) override;
+
     private:
+        enum SerializationCodes{
+            START = 1,
+            END,
+            INT,
+            FLOAT,
+            STRING,
+            EQUAL,
+            LESS,
+            LESS_OR_EQUAL,
+            GREATER,
+            GREATER_OR_EQUAL,
+            ANY
+        };
+
         PatternsVector entries;
         std::stringstream treePath;
     };
 }
 
 template<Linda::PatternEntryType TYPE>
-void Linda::Pattern::add(int i) {
+void Linda::Pattern::add(TupleEntry::int_type i) {
     if (TYPE == PatternEntryType::Any) {
         throw std::runtime_error("Can't use Any with specific value.");
     }else{
@@ -96,7 +118,7 @@ void Linda::Pattern::add(int i) {
 }
 
 template<Linda::PatternEntryType TYPE>
-void Linda::Pattern::add(float f) {
+void Linda::Pattern::add(TupleEntry::float_type f) {
     switch (TYPE) {
         case PatternEntryType::Any:
             throw std::runtime_error("Can't use Any with specific value.");
@@ -110,7 +132,7 @@ void Linda::Pattern::add(float f) {
 }
 
 template<Linda::PatternEntryType TYPE>
-void Linda::Pattern::add(const std::string& str) {
+void Linda::Pattern::add(const TupleEntry::string_type& str) {
     if (TYPE == PatternEntryType::Any) {
             throw std::runtime_error("Can't use Any with specific value.");
     }else{

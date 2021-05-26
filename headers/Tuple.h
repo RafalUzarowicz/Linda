@@ -10,6 +10,9 @@
 
 #include "ISerializable.h"
 
+//TODO:
+// - include maximum serialized length
+
 namespace Linda{
     template<class... Ts> struct operators : Ts... { using Ts::operator()...; };
     template<class... Ts> operators(Ts...) -> operators<Ts...>;

@@ -81,29 +81,45 @@ Linda::PatternEntryType Linda::PatternEntry::getType() const {
     return pattern.first;
 }
 
-Linda::PatternEntry::PatternEntry(const Linda::PatternEntry& patternEntry) {
-    pattern = patternEntry.pattern;
-}
+Linda::PatternEntry::PatternEntry(const Linda::PatternEntry& patternEntry) = default;
 
-Linda::Pattern::Pattern(const Linda::Pattern& pattern) {
-    entries = pattern.entries;
-    treePath.clear();
+Linda::Pattern::Pattern(const Linda::Pattern& pattern) : entries(pattern.entries){
     treePath << pattern.treePath.str();
 }
 
+Linda::Pattern::Pattern(const std::vector<ISerializable::serialization_type>& vector) {
+    Pattern::deserialize(vector);
+}
+
+std::vector<ISerializable::serialization_type> Linda::Pattern::serialize() {
+    std::vector<serialization_type> data;
+    data.emplace_back(Pattern::SerializationCodes::START);
+    TupleEntry::int_type intTmp{};
+    TupleEntry::float_type floatTmp{};
+    TupleEntry::string_type strTmp{};
+    for(auto& entry : entries){
+    }
+    data.emplace_back(Pattern::SerializationCodes::END);
+    return data;
+}
+
+void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) {
+
+}
+
 std::string Linda::Pattern::to_string() const {
-    std::stringstream stringstream;
-    stringstream << "(";
+    std::stringstream ss;
+    ss << "(";
     for(size_t i = 0, e = entries.size();; ++i ){
-        stringstream << entries[i].to_string();
+        ss << entries[i].to_string();
         if(i<e-1){
-            stringstream<<", ";
+            ss << ", ";
         }else{
             break;
         }
     }
-    stringstream << ")";
-    return stringstream.str();
+    ss << ")";
+    return ss.str();
 }
 
 bool Linda::Pattern::check(const Linda::Tuple& tuple) const {
@@ -149,6 +165,7 @@ void Linda::Pattern::add<Linda::PatternEntryType::Any>(Linda::TupleEntryType typ
             entries.emplace_back(Linda::PatternEntryType::Any, "");
             break;
         default:
+            // TODO: custom exceptions
             throw std::runtime_error("Unknown type!");
     }
 }

@@ -78,35 +78,35 @@ std::string Linda::Tuple::to_string() const{
 
 std::vector<ISerializable::serialization_type> Linda::Tuple::serialize() {
     std::vector<serialization_type> data;
-    data.emplace_back(START);
+    data.emplace_back(Tuple::SerializationCodes::START);
     TupleEntry::int_type intTmp{};
     TupleEntry::float_type floatTmp{};
     TupleEntry::string_type strTmp{};
     for(auto& entry : entries){
            switch(entry.getType()){
                case TupleEntryType::Int:
-                   data.emplace_back(INT);
+                   data.emplace_back(Tuple::SerializationCodes::INT);
                    intTmp = std::get<TupleEntry::int_type>(entry.getValue());
                    data.insert(data.end(), (serialization_type*) & intTmp, (serialization_type *) & intTmp + sizeof(TupleEntry::int_type));
-                   data.emplace_back(INT);
+                   data.emplace_back(Tuple::SerializationCodes::INT);
                    break;
                case TupleEntryType::Float:
-                   data.emplace_back(FLOAT);
+                   data.emplace_back(Tuple::SerializationCodes::FLOAT);
                    floatTmp = std::get<TupleEntry::float_type>(entry.getValue());
                    data.insert(data.end(), (serialization_type*) & floatTmp, (serialization_type *) & floatTmp + sizeof(TupleEntry::float_type));
-                   data.emplace_back(FLOAT);
+                   data.emplace_back(Tuple::SerializationCodes::FLOAT);
                    break;
                case TupleEntryType::String:
-                   data.emplace_back(STRING);
+                   data.emplace_back(Tuple::SerializationCodes::STRING);
                    strTmp = std::get<TupleEntry::string_type>(entry.getValue());
                    data.insert(data.end(), strTmp.data(), strTmp.data() + strTmp.size());
-                   data.emplace_back(STRING);
+                   data.emplace_back(Tuple::SerializationCodes::STRING);
                    break;
                default:
                    break;
            }
     }
-    data.emplace_back(END);
+    data.emplace_back(Tuple::SerializationCodes::END);
     return data;
 }
 
@@ -117,39 +117,39 @@ void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
     TupleEntry::string_type strTmp{};
     bool isDeserializable = true;
     if(!vector.empty() && vector.size() > 2){
-        if(vector.front() != START || vector.back() != END){
+        if(vector.front() != Tuple::SerializationCodes::START || vector.back() != Tuple::SerializationCodes::END){
             isDeserializable = false;
         }else{
             for(size_t i{1}; isDeserializable && i < vector.size()-1;){
                 temp = vector[i];
                 ++i;
                 switch (temp) {
-                    case INT:
+                    case Tuple::SerializationCodes::INT:
                         memcpy(&intTmp, vector.data()+i, sizeof(TupleEntry::int_type) / sizeof(serialization_type));
                         push(intTmp);
                         i += sizeof(TupleEntry::int_type) / sizeof(serialization_type);
-                        if(i >= vector.size()-1 || vector[i] != INT){
+                        if(i >= vector.size()-1 || vector[i] != Tuple::SerializationCodes::INT){
                             isDeserializable = false;
                             break;
                         }else{
                             ++i;
                         }
                         break;
-                    case FLOAT:
+                    case Tuple::SerializationCodes::FLOAT:
                         memcpy(&floatTmp, vector.data()+i, sizeof(TupleEntry::float_type) / sizeof(serialization_type));
                         push(floatTmp);
                         i += sizeof(TupleEntry::float_type) / sizeof(serialization_type);
-                        if(i >= vector.size()-1 || vector[i] != FLOAT){
+                        if(i >= vector.size()-1 || vector[i] != Tuple::SerializationCodes::FLOAT){
                             isDeserializable = false;
                             break;
                         }else{
                             ++i;
                         }
                         break;
-                    case STRING:
+                    case Tuple::SerializationCodes::STRING:
                         strTmp.clear();
                         // TODO: limit maximum string
-                        while(vector[i] != STRING){
+                        while(vector[i] != Tuple::SerializationCodes::STRING){
                             strTmp.push_back(vector[i]);
                             ++i;
                             if(i >= vector.size()-1){
