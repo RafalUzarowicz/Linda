@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿#ifndef LINDA_PATTERN_H
+#define LINDA_PATTERN_H
 
 #include <utility>
 #include <variant>
@@ -7,6 +8,7 @@
 #include <sstream>
 
 #include "Tuple.h"
+#include "ISerializable.h"
 
 namespace Linda{
     enum class PatternEntryType{
@@ -120,3 +122,5 @@ void Linda::Pattern::add(const std::string& str) {
 std::ostream& operator<<(std::ostream&, const Linda::PatternEntryType&);
 std::ostream& operator<<(std::ostream&, const Linda::PatternEntry&);
 std::ostream& operator<<(std::ostream&, const Linda::Pattern&);
+
+#endif //LINDA_PATTERN_H

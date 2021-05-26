@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LINDA_TUPLE_H
+#define LINDA_TUPLE_H
 
 #include <utility>
 #include <vector>
@@ -6,6 +7,8 @@
 #include <stdexcept>
 #include <variant>
 #include <sstream>
+
+#include "ISerializable.h"
 
 namespace Linda{
     template<class... Ts> struct operators : Ts... { using Ts::operator()...; };
@@ -20,7 +23,10 @@ namespace Linda{
 
     class TupleEntry{
     public:
-        using TupleValue = std::variant<int, float, std::string>;
+        using int_type = int32_t;
+        using float_type = float;
+        using string_type = std::string;
+        using TupleValue = std::variant<int_type, float_type, string_type>;
 
         explicit TupleEntry(TupleValue value = 0) : value(std::move(value)){}
 
@@ -47,19 +53,20 @@ namespace Linda{
         TupleValue value;
     };
 
-    class Tuple {
+    class Tuple : public ISerializable {
     public:
         Tuple() = default;
         ~Tuple() = default;
         Tuple(const Tuple&);
+        Tuple(const std::vector<char>&);
 
         using EntriesVector = std::vector<TupleEntry>;
 
-        void push(int);
+        void push(TupleEntry::int_type);
 
-        void push(float);
+        void push(TupleEntry::float_type);
 
-        void push(std::string);
+        void push(TupleEntry::string_type);
 
         const EntriesVector& getEntries() const { return entries; }
         std::string path() const { return treePath.str(); }
@@ -73,7 +80,18 @@ namespace Linda{
         auto begin() { return entries.begin(); }
         auto end() { return entries.end(); }
 
+        std::vector<serialization_type> serialize() override;
+        void deserialize(const std::vector<serialization_type>& vector) override;
+
     private:
+        enum SerializationCodes{
+            START = 1,
+            END,
+            INT,
+            FLOAT,
+            STRING
+        };
+
         EntriesVector entries;
         std::stringstream treePath;
     };
@@ -82,3 +100,5 @@ namespace Linda{
 std::ostream& operator<<(std::ostream&, const Linda::TupleEntryType&);
 std::ostream& operator<<(std::ostream&, const Linda::TupleEntry&);
 std::ostream& operator<<(std::ostream&, const Linda::Tuple&);
+
+#endif //LINDA_TUPLE_H
