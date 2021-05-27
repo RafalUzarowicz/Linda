@@ -101,6 +101,9 @@ namespace Linda{
             GREATER_OR_EQUAL,
             ANY
         };
+        // TODO: this can be done better
+        static SerializationCodes typeToSerializationCode(PatternEntryType);
+        static PatternEntryType serializationCodeToType(SerializationCodes);
 
         PatternsVector entries;
         std::stringstream treePath;

@@ -1,7 +1,6 @@
 #include <iostream>
 #include "Tuple.h"
 #include "Pattern.h"
-#include "ISerializable.h"
 
 #define STR_BOOL(x) ((x) ? "true" : "false")
 
@@ -18,7 +17,7 @@ void testyRafalaXD(){
     std::cout<<t<<'\n';
     std::cout<<t.path()<<'\n';
 
-    for(char& c : t.serialize()){
+    for(auto& c : t.serialize()){
         std::cout<< static_cast<unsigned>(c) <<' ';
     }
     std::cout<<'\n';
@@ -48,7 +47,10 @@ void testyRafalaXD(){
     std::cout<<p<<'\n';
     std::cout<<p.path()<<'\n';
 
-    std::cout<<p.path().find(t2.path())<<'\n';
+    for(auto& c : p.serialize()){
+        std::cout<< static_cast<unsigned>(c) <<' ';
+    }
+    std::cout<<'\n';
 
     std::cout << STR_BOOL(p.check(t2)) << '\n';
 }

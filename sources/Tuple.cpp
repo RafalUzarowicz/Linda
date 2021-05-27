@@ -29,7 +29,7 @@ std::string Linda::TupleEntry::to_string() const {
                         std::string str = std::to_string(f);
                         return std::string("f:")+str.erase(str.find_last_not_of('0') + 2, std::string::npos);
                     },
-                    [](TupleEntry::string_type str) {
+                    [](const TupleEntry::string_type& str) {
                         return "s:\""+str+"\"";
                     }
             },
@@ -42,7 +42,7 @@ Linda::Tuple::Tuple(const Tuple& tuple) {
     treePath << tuple.treePath.str();
 }
 
-Linda::Tuple::Tuple(const std::vector<char>& vec) {
+Linda::Tuple::Tuple(const std::vector<ISerializable::serialization_type>& vec) {
     Tuple::deserialize(vec);
 }
 
@@ -77,6 +77,7 @@ std::string Linda::Tuple::to_string() const{
 }
 
 std::vector<ISerializable::serialization_type> Linda::Tuple::serialize() {
+    // TODO: refactor
     std::vector<serialization_type> data;
     data.emplace_back(Tuple::SerializationCodes::START);
     TupleEntry::int_type intTmp{};
@@ -112,6 +113,7 @@ std::vector<ISerializable::serialization_type> Linda::Tuple::serialize() {
 
 void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
     // TODO: custom exceptions instead of bool
+    // TODO: refactor
     serialization_type temp{};
     TupleEntry::int_type intTmp{};
     TupleEntry::float_type floatTmp{};

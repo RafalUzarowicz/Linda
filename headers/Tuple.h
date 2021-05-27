@@ -50,7 +50,7 @@ namespace Linda{
             }
         }
 
-        std::string to_string() const;
+        [[nodiscard]] std::string to_string() const;
 
     private:
         TupleValue value;
@@ -61,7 +61,7 @@ namespace Linda{
         Tuple() = default;
         ~Tuple() = default;
         Tuple(const Tuple&);
-        Tuple(const std::vector<char>&);
+        explicit Tuple(const std::vector<ISerializable::serialization_type>&);
 
         using EntriesVector = std::vector<TupleEntry>;
 
