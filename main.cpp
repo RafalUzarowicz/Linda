@@ -52,6 +52,11 @@ void testyRafalaXD(){
     }
     std::cout<<'\n';
 
+    Linda::Pattern p2;
+    p2.deserialize(p.serialize());
+
+    std::cout<<p2<<'\n';
+
     std::cout << STR_BOOL(p.check(t2)) << '\n';
 }
 

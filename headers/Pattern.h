@@ -105,6 +105,10 @@ namespace Linda{
         static SerializationCodes typeToSerializationCode(PatternEntryType);
         static PatternEntryType serializationCodeToType(SerializationCodes);
 
+        void addWithoutChecks(PatternEntryType, TupleEntry::int_type);
+        void addWithoutChecks(PatternEntryType, TupleEntry::float_type);
+        void addWithoutChecks(PatternEntryType, TupleEntry::string_type);
+
         PatternsVector entries;
         std::stringstream treePath;
     };
