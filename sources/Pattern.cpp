@@ -266,6 +266,7 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
     TupleEntry::int_type intTmp{};
     TupleEntry::float_type floatTmp{};
     TupleEntry::string_type strTmp{};
+
     TupleEntryType typeTmp{};
     SerializationCodes code{};
     PatternEntryType pTypeTmp{};
@@ -291,11 +292,9 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
                         break;
                 }
                 if(isDeserializable){
-                    code = static_cast<SerializationCodes>(vector[i]);
-                    ++i;
-                    temp = vector[i];
+                    code = static_cast<SerializationCodes>(vector[i++]);
+                    temp = vector[i++];
                     pTypeTmp = static_cast<PatternEntryType>(temp);
-                    ++i;
                     if(temp == ANY){
                         add<PatternEntryType::Any>(typeTmp);
                     }else{
@@ -331,14 +330,16 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
                                     addWithoutChecks(pTypeTmp, strTmp);
                                 }
                                 break;
+                            case TupleEntryType::Unknown:
+                                isDeserializable = false;
+                                break;
                         }
                     }
                 }
-                if(code != static_cast<SerializationCodes>(vector[i])){
+                if(code != static_cast<SerializationCodes>(vector[i++])){
                     isDeserializable = false;
                     break;
                 }
-                ++i;
             }
         }
     }

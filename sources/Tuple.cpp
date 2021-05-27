@@ -46,19 +46,22 @@ Linda::Tuple::Tuple(const std::vector<ISerializable::serialization_type>& vec) {
     Tuple::deserialize(vec);
 }
 
-void Linda::Tuple::push(TupleEntry::int_type value){
+Linda::Tuple& Linda::Tuple::push(TupleEntry::int_type value){
     entries.emplace_back(value);
     treePath << 'i';
+    return *this;
 }
 
-void Linda::Tuple::push(TupleEntry::float_type value){
+Linda::Tuple& Linda::Tuple::push(TupleEntry::float_type value){
     entries.emplace_back(value);
     treePath << 'f';
+    return *this;
 }
 
-void Linda::Tuple::push(TupleEntry::string_type value){
+Linda::Tuple& Linda::Tuple::push(TupleEntry::string_type value){
     entries.emplace_back(value);
     treePath << 's';
+    return *this;
 }
 
 std::string Linda::Tuple::to_string() const{
@@ -77,7 +80,6 @@ std::string Linda::Tuple::to_string() const{
 }
 
 std::vector<ISerializable::serialization_type> Linda::Tuple::serialize() {
-    // TODO: refactor
     std::vector<serialization_type> data;
     data.emplace_back(Tuple::SerializationCodes::START);
     TupleEntry::int_type intTmp{};

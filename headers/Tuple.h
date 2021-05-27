@@ -17,7 +17,7 @@ namespace Linda{
     template<class... Ts> struct operators : Ts... { using Ts::operator()...; };
     template<class... Ts> operators(Ts...) -> operators<Ts...>;
 
-    enum class TupleEntryType : size_t{
+    enum class TupleEntryType : size_t {
         Unknown = std::variant_npos,
         Int = 0,
         Float,
@@ -65,11 +65,11 @@ namespace Linda{
 
         using EntriesVector = std::vector<TupleEntry>;
 
-        void push(TupleEntry::int_type);
+        Linda::Tuple& push(TupleEntry::int_type);
 
-        void push(TupleEntry::float_type);
+        Linda::Tuple& push(TupleEntry::float_type);
 
-        void push(TupleEntry::string_type);
+        Linda::Tuple& push(TupleEntry::string_type);
 
         const EntriesVector& getEntries() const { return entries; }
         std::string path() const { return treePath.str(); }
@@ -88,7 +88,7 @@ namespace Linda{
 
     private:
         enum SerializationCodes{
-            START = 1,
+            START = 0x80,
             END,
             INT,
             FLOAT,

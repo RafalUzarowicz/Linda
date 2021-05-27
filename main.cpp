@@ -4,11 +4,9 @@
 
 #define STR_BOOL(x) ((x) ? "true" : "false")
 
-void testyRafalaXD(){
-    Linda::Tuple t;
-    t.push(2);
-    t.push(3.0f);
-    t.push("Tak");
+void testyRafalaXd(){
+
+    Linda::Tuple t(Linda::Tuple().push(2).push(3.0f).push("Tak"));
 
     for(auto& val : t){
         std::cout<<val.getType()<<'\n';
@@ -53,6 +51,7 @@ void testyRafalaXD(){
     std::cout<<'\n';
 
     Linda::Pattern p2;
+
     p2.deserialize(p.serialize());
 
     std::cout<<p2<<'\n';
@@ -61,7 +60,7 @@ void testyRafalaXD(){
 }
 
 int main(){
-    void (*fun)() = testyRafalaXD;
+    void (*fun)() = testyRafalaXd;
 
     fun();
 }
