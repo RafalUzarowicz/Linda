@@ -97,7 +97,21 @@ std::vector<ISerializable::serialization_type> Linda::Pattern::serialize() {
     TupleEntry::int_type intTmp{};
     TupleEntry::float_type floatTmp{};
     TupleEntry::string_type strTmp{};
+    Pattern::SerializationCodes entryType;
     for(auto& entry : entries){
+        switch(entry.getTupleType()){
+            case TupleEntryType::Int:
+                entryType = INT;
+                break;
+            case TupleEntryType::Float:
+                entryType = FLOAT;
+                break;
+            case TupleEntryType::String:
+                entryType = STRING;
+                break;
+            default:
+                break;
+        }
     }
     data.emplace_back(Pattern::SerializationCodes::END);
     return data;
@@ -123,7 +137,7 @@ std::string Linda::Pattern::to_string() const {
 }
 
 bool Linda::Pattern::check(const Linda::Tuple& tuple) const {
-    if(tuple.size() > size()) return false;
+    if(tuple.size() > size() || treePath.str().find(tuple.path()) != 0) return false;
     for( size_t i{}; i<tuple.size(); ++i){
         if(tuple[i].getType() == entries[i].getTupleType()){
             switch (entries[i].getType()) {
@@ -157,12 +171,15 @@ void Linda::Pattern::add<Linda::PatternEntryType::Any>(Linda::TupleEntryType typ
     switch (type) {
         case Linda::TupleEntryType::Int:
             entries.emplace_back(Linda::PatternEntryType::Any, 0);
+            treePath << 'i';
             break;
         case Linda::TupleEntryType::Float:
             entries.emplace_back(Linda::PatternEntryType::Any, 0.0f);
+            treePath << 'f';
             break;
         case Linda::TupleEntryType::String:
             entries.emplace_back(Linda::PatternEntryType::Any, "");
+            treePath << 's';
             break;
         default:
             // TODO: custom exceptions

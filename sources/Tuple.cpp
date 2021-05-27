@@ -111,6 +111,7 @@ std::vector<ISerializable::serialization_type> Linda::Tuple::serialize() {
 }
 
 void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
+    // TODO: custom exceptions instead of bool
     serialization_type temp{};
     TupleEntry::int_type intTmp{};
     TupleEntry::float_type floatTmp{};

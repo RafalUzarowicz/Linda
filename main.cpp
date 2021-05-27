@@ -46,6 +46,9 @@ void testyRafalaXD(){
     }
 
     std::cout<<p<<'\n';
+    std::cout<<p.path()<<'\n';
+
+    std::cout<<p.path().find(t2.path())<<'\n';
 
     std::cout << STR_BOOL(p.check(t2)) << '\n';
 }
