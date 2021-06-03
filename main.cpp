@@ -6,6 +6,8 @@
 
 #define STR_BOOL(x) ((x) ? "true" : "false")
 
+
+#define RAFAL
 //#define GLUPOTY
 
 class Test{
@@ -40,9 +42,7 @@ void testyRafalaXd(){
     }
     std::cout<<'\n';
 
-    Linda::Tuple t2;
-
-    t2.deserialize(t.serialize());
+    Linda::Tuple t2(t.serialize());
 
     Linda::Tuple t3(t.serialize());
 
@@ -70,19 +70,20 @@ void testyRafalaXd(){
     }
     std::cout<<'\n';
 
-    Linda::Pattern p2;
-
-    p2.deserialize(p.serialize());
+    Linda::Pattern p2(p.serialize());
 
     std::cout<<p2<<'\n';
+    std::cout<<p2.path()<<'\n';
 
     std::cout << STR_BOOL(p.check(t2)) << '\n';
 }
 
 int main(){
+#ifdef RAFAL
     void (*fun)() = testyRafalaXd;
 #ifdef GLUPOTY
     fun = glupieTesty;
 #endif
     fun();
+#endif
 }

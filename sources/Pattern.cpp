@@ -65,7 +65,7 @@ std::string Linda::PatternEntry::to_string() const {
                             return std::string("f:")+ss.str()+str.erase(str.find_last_not_of('0') + 2, std::string::npos);
                         }
                     },
-                    [&](std::string str) {
+                    [&](const std::string& str) {
                         if(ss.str() == "*"){
                             return std::string("s:*");
                         }else{
@@ -355,6 +355,7 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
                                     add(pTypeTmp, strTmp);
                                 }
                                 break;
+                            default:
                             case TupleEntryType::Unknown:
                                 isDeserializable = false;
                                 break;
