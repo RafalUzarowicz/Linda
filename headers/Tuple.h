@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <variant>
 #include <sstream>
+#include <cstring>
 
 #include "ISerializable.h"
 #include "Constants.h"
