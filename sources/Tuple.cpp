@@ -115,7 +115,6 @@ std::vector<ISerializable::serialization_type> Linda::Tuple::serialize() {
 
 void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
     // TODO: custom exceptions instead of bool
-    // TODO: refactor
     serialization_type temp{};
     TupleEntry::int_type intTmp{};
     TupleEntry::float_type floatTmp{};
@@ -126,8 +125,7 @@ void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
             isDeserializable = false;
         }else{
             for(size_t i{1}; isDeserializable && i < vector.size()-1;){
-                temp = vector[i];
-                ++i;
+                temp = vector[i++];
                 switch (temp) {
                     case Tuple::SerializationCodes::INT:
                         memcpy(&intTmp, vector.data()+i, sizeof(TupleEntry::int_type) / sizeof(serialization_type));
@@ -153,11 +151,9 @@ void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
                         break;
                     case Tuple::SerializationCodes::STRING:
                         strTmp.clear();
-                        // TODO: limit maximum string
-                        while(vector[i] != Tuple::SerializationCodes::STRING){
-                            strTmp.push_back(vector[i]);
-                            ++i;
-                            if(i >= vector.size()-1){
+                        for(int32_t j{}; vector[i] != Tuple::SerializationCodes::STRING; ++j){
+                            strTmp.push_back(vector[i++]);
+                            if( j > Linda::MAX_STRING_LENGTH || i >= vector.size()-1){
                                 isDeserializable = false;
                                 break;
                             }

@@ -9,6 +9,7 @@
 
 #include "Tuple.h"
 #include "ISerializable.h"
+#include "Constants.h"
 
 //TODO:
 // - include maximum serialized length
@@ -55,7 +56,7 @@ namespace Linda{
         Pattern() = default;
         ~Pattern() = default;
         Pattern(const Pattern&);
-        Pattern(const std::vector<ISerializable::serialization_type>&);
+        explicit Pattern(const std::vector<ISerializable::serialization_type>&);
 
         template<PatternEntryType TYPE>
         void add(TupleEntry::int_type);
@@ -68,6 +69,11 @@ namespace Linda{
 
         template<PatternEntryType TYPE>
         void add(TupleEntryType);
+
+        void add(PatternEntryType type, TupleEntry::int_type i);
+        void add(PatternEntryType type, TupleEntry::float_type f);
+        void add(PatternEntryType type, TupleEntry::string_type s);
+        void add(PatternEntryType pType, Linda::TupleEntryType tType);
 
         bool check(const Tuple&) const;
 
@@ -101,13 +107,8 @@ namespace Linda{
             GREATER_OR_EQUAL,
             ANY
         };
-        // TODO: this can be done better
         static SerializationCodes typeToSerializationCode(PatternEntryType);
         static PatternEntryType serializationCodeToType(SerializationCodes);
-
-        void addWithoutChecks(PatternEntryType, TupleEntry::int_type);
-        void addWithoutChecks(PatternEntryType, TupleEntry::float_type);
-        void addWithoutChecks(PatternEntryType, TupleEntry::string_type);
 
         PatternsVector entries;
         std::stringstream treePath;
@@ -116,36 +117,17 @@ namespace Linda{
 
 template<Linda::PatternEntryType TYPE>
 void Linda::Pattern::add(TupleEntry::int_type i) {
-    if (TYPE == PatternEntryType::Any) {
-        throw std::runtime_error("Can't use Any with specific value.");
-    }else{
-        entries.emplace_back(TYPE, i);
-        treePath << "i";
-    }
+    add(TYPE, i);
 }
 
 template<Linda::PatternEntryType TYPE>
 void Linda::Pattern::add(TupleEntry::float_type f) {
-    switch (TYPE) {
-        case PatternEntryType::Any:
-            throw std::runtime_error("Can't use Any with specific value.");
-        case PatternEntryType::Equal:
-            throw std::runtime_error("Can't use Equal on float value..");
-        default:
-            entries.emplace_back(TYPE, f);
-            treePath << "f";
-            break;
-    }
+    add(TYPE, f);
 }
 
 template<Linda::PatternEntryType TYPE>
 void Linda::Pattern::add(const TupleEntry::string_type& str) {
-    if (TYPE == PatternEntryType::Any) {
-            throw std::runtime_error("Can't use Any with specific value.");
-    }else{
-        entries.emplace_back(TYPE, str);
-        treePath << "s";
-    }
+    add(TYPE, str);
 }
 
 std::ostream& operator<<(std::ostream&, const Linda::PatternEntryType&);

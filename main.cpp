@@ -2,7 +2,27 @@
 #include "Tuple.h"
 #include "Pattern.h"
 
+#include <cstdarg>
+
 #define STR_BOOL(x) ((x) ? "true" : "false")
+
+//#define GLUPOTY
+
+class Test{
+public:
+    Test(int x, ...){
+        std::va_list args;
+        va_start(args, x);
+        for (int i = 0; i < x; ++i) {
+            std::cout << va_arg(args, int) << '\n';
+        }
+        va_end(args);
+    }
+};
+
+void glupieTesty(){
+    Test test(3, 2, 8.0f, "Bue");
+}
 
 void testyRafalaXd(){
 
@@ -39,7 +59,7 @@ void testyRafalaXd(){
     p.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::String);
 
     for(auto& val : p){
-        std::cout<<val.to_string()<<'\n';
+        std::cout<<val<<'\n';
     }
 
     std::cout<<p<<'\n';
@@ -61,6 +81,8 @@ void testyRafalaXd(){
 
 int main(){
     void (*fun)() = testyRafalaXd;
-
+#ifdef GLUPOTY
+    fun = glupieTesty;
+#endif
     fun();
 }

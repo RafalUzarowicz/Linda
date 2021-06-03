@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "ISerializable.h"
+#include "Constants.h"
 
 //TODO:
 // - include maximum serialized length
