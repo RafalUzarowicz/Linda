@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "TupleSpace.h"
+#include <Linda.h>
 
 #define STR_BOOL(x) ((x) ? "true" : "false")
 
