@@ -17,3 +17,7 @@ add_executable(LINDA)
 
 target_sources(LINDA PRIVATE main.cpp ${SOURCES})
 target_include_directories(LINDA PRIVATE ${HEADERS})
+
+add_executable(RAFAL)
+target_sources(RAFAL PRIVATE rafal.cpp ${SOURCES})
+target_include_directories(RAFAL PRIVATE ${HEADERS})
