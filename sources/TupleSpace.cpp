@@ -1,6 +1,7 @@
 #include "TupleSpace.h"
 
 void Linda::create(const std::string& dirName, const std::string& path) {
+    // TODO: change arguments' names - dirName == trash
     // TODO: implement
 }
 

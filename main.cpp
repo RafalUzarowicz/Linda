@@ -10,7 +10,6 @@
 // - tree height limit
 // - max tuple length limit
 // - limit tuples number in one file
-// - changing connection problem
 
 int main(){
 }
