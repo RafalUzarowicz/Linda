@@ -81,6 +81,7 @@ namespace Linda{
         const PatternsVector& getPatterns() const { return entries; }
         std::string path() const { return treePath.str(); }
         std::string to_string() const;
+        std::vector<std::string> all_paths() const;
 
         void clear(){ entries.clear(); treePath.clear(); }
 
@@ -113,6 +114,7 @@ namespace Linda{
 
         PatternsVector entries;
         std::stringstream treePath;
+        std::vector<std::stringstream> allTreePaths;
     };
 }
 

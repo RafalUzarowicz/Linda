@@ -51,9 +51,13 @@ void testyRafalaXd(){
     for(auto& val : p){
         std::cout<<val<<'\n';
     }
-
     std::cout<<p<<'\n';
     std::cout<<p.path()<<'\n';
+
+    std::cout<<"all paths\n";
+    for (const auto& pat : p.all_paths()){
+        std::cout<<pat<<std::endl;
+    }
 
     for(auto& c : p.serialize()){
         std::cout<< static_cast<unsigned>(c) <<' ';

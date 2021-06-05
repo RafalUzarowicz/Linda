@@ -27,7 +27,7 @@ void Linda::connect(const std::string& path) {
         if(std::filesystem::exists(path + "/.tuplespace")){
             State & state = State::getInstance();
             state.tupleSpacePath = path;
-            //State::connected = true;
+            state.connected = true;
         }else{
             throw TupleSpaceConnectException(" \"" + path + "\" not a tuplespace.");
         }
@@ -37,11 +37,10 @@ void Linda::connect(const std::string& path) {
 }
 
 void Linda::output(Linda::Tuple tuple) {
-//    if(!State::connected){
-//        throw TupleSpaceConnectException("Not connected to any tuplespace.");
-//    }
+    if(!State::getInstance().connected){
+        throw TupleSpaceConnectException("Not connected to any tuplespace.");
+    }
     State& state = State::getInstance();
-    //todo find file, lock file, put tuple, notify processe
 
     //find file
     //fixme can this cause process to hang?
@@ -71,7 +70,6 @@ void Linda::output(Linda::Tuple tuple) {
         throw TupleSpaceException("Could not acquire file lock");
     }
 
-    //do stuff - find empty record & write
     //todo add max file size check
     ssize_t bytes_read;
     bytes_read = read(fd, read_buffer, Linda::ENTRY_SIZE);
@@ -108,31 +106,31 @@ void Linda::output(Linda::Tuple tuple) {
         close(fd);
         throw TupleSpaceException("Error releasing file lock");
     }
-
-
     close(fd);
-    // TODO: implement notify processes
+
+
+    //todo find waiting processes and send signals
 }
 
 Linda::Tuple Linda::input(Linda::Pattern pattern, std::chrono::milliseconds timeout) {
-//    std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
-//    if(!State::connected){
-//        throw TupleSpaceConnectException("Not connected to any tuplespace.");
-//    }
+    std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
+    if(!State::getInstance().connected){
+        throw TupleSpaceConnectException("Not connected to any tuplespace.");
+    }
     State& state = State::getInstance();
+    // TODO: implement - read and delete
 
 
 
-    // TODO: implement
     return Linda::Tuple();
 }
 
 //don't change back to read cause it clashes with unistd.h read
 Linda::Tuple Linda::readTuple(Linda::Pattern pattern, std::chrono::milliseconds timeout) {
-//    if(!State::connected){
-//        throw TupleSpaceConnectException("Not connected to any tuplespace.");
-//    }
-//    State& state = State::getInstance();
+    std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
+    if(!State::getInstance().connected){
+        throw TupleSpaceConnectException("Not connected to any tuplespace.");
+    }
     // TODO: implement
     return Linda::Tuple();
 }

@@ -106,6 +106,18 @@ std::string Linda::Pattern::to_string() const {
     return ss.str();
 }
 
+std::vector<std::string> Linda::Pattern::all_paths() const{
+    std::vector<std::string> str_vec;
+    str_vec.push_back(treePath.str());
+    for(int i = entries.size()-1; i >=0; i--){
+        if(entries[i].getType() != PatternEntryType::Any){
+            break;
+        }
+        str_vec.push_back(treePath.str().substr(0,i));
+    }
+    return str_vec;
+}
+
 bool Linda::Pattern::check(const Linda::Tuple& tuple) const {
     if(tuple.size() > size() || treePath.str().find(tuple.path()) != 0) return false;
     for( size_t i{}; i<tuple.size(); ++i){
