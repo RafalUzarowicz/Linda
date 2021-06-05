@@ -7,21 +7,15 @@ add_compile_options(-Wall -Wextra -pedantic)
 
 include_directories(headers sources)
 
-file(GLOB HEADERS CONFIGURE_DEPENDS "headers/*.h")
 file(GLOB SOURCES CONFIGURE_DEPENDS "sources/*.cpp")
 
-message("${HEADERS}")
 message("${SOURCES}")
 
 add_executable(LINDA)
-
 target_sources(LINDA PRIVATE main.cpp ${SOURCES})
-target_include_directories(LINDA PRIVATE ${HEADERS})
 
-add_executable(RAFAL headers/TupleSpaceCreateException.h)
+add_executable(RAFAL)
 target_sources(RAFAL PRIVATE rafal.cpp ${SOURCES})
-target_include_directories(RAFAL PRIVATE ${HEADERS})
 
 add_executable(LINDA_TEST)
 target_sources(LINDA_TEST PRIVATE main_linda_test.cpp ${SOURCES})
-target_include_directories(LINDA_TEST PRIVATE ${HEADERS})

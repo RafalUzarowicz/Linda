@@ -81,8 +81,8 @@ void testyRafalaXd(){
 //    tuplespace.input(p);
 //    tuplespace.input(p, 10000);
 //
-//    tuplespace.read(p2);
-//    tuplespace.read(p2, 1000);
+//    tuplespace.readTuple(p2);
+//    tuplespace.readTuple(p2, 1000);
 
     // Wersja 2
     Linda::create();
@@ -96,8 +96,8 @@ void testyRafalaXd(){
     Linda::input(p);
     Linda::input(p, std::chrono::milliseconds (1000));
 
-    Linda::read(p2);
-    Linda::read(p2, std::chrono::milliseconds (1000));
+    Linda::readTuple(p2);
+    Linda::readTuple(p2, std::chrono::milliseconds(1000));
 }
 
 int main(){

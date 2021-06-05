@@ -10,7 +10,7 @@ namespace Linda{
         void operator=(const State&) = delete;
     private:
         State() : tupleSpacePath(DEFAULT_TUPLESPACE_DIR + "/" + DEFAULT_TUPLESPACE_NAME) {
-            State::connected = false;
+            connected = false;
         }
 
         static State & getInstance(){
@@ -21,13 +21,13 @@ namespace Linda{
         //tuplespace  = a dir named tuplespace in specified path, the dir contains file .tuplespace
         std::string tupleSpacePath{};
 
-        static bool connected;
+        bool connected;
 
         friend void create(const std::string&, const std::string&);
         friend void connect(const std::string&);
         friend void output(Tuple);
         friend Tuple input(Pattern, std::chrono::milliseconds);
-        friend Tuple read(Pattern, std::chrono::milliseconds);
+        friend Tuple readTuple(Pattern pattern, std::chrono::milliseconds timeout);
     };
 }
 

@@ -1,5 +1,6 @@
 #ifndef LINDA_TUPLESPACECONNECTIONEXCEPTION_H
 #define LINDA_TUPLESPACECONNECTIONEXCEPTION_H
+
 #include "TupleSpaceException.h"
 
 namespace Linda{
