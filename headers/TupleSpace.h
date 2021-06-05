@@ -3,6 +3,10 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fcntl.h>
+#include <cstdio>
+#include <cstring>
+#include <unistd.h>
 
 #include "Tuple.h"
 #include "Pattern.h"

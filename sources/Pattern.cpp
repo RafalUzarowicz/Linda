@@ -158,7 +158,7 @@ Linda::Pattern::SerializationCodes Linda::Pattern::typeToSerializationCode(Linda
         default:
             break;
     }
-    // TODO: custom exception at wrong type
+    // TODO: custom exception when wrong type
     return ANY;
 }
 
@@ -179,7 +179,7 @@ Linda::PatternEntryType Linda::Pattern::serializationCodeToType(SerializationCod
         default:
             break;
     }
-    // TODO: custom exception at wrong code
+    // TODO: custom exception when wrong code
     return PatternEntryType::Any;
 }
 

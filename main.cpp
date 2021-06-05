@@ -1,6 +1,6 @@
 //TODO:
-// - custom exceptions
-// - main operations' implementation
+// - custom exceptions (some exist)
+// - main operations' implementation -> connect, create done
 // - signal sending and signal handlers
 // - signal blocking
 // - tests
