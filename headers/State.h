@@ -9,13 +9,14 @@ namespace Linda{
         State(State&) = delete;
         void operator=(const State&) = delete;
     private:
-        State() : tupleSpaceDirName(DEFAULT_TUPLESPACE_NAME), tupleSpacePath(DEFAULT_TUPLESPACE_DIR) {
+        State() : tupleSpacePath(DEFAULT_TUPLESPACE_DIR + "/" + DEFAULT_TUPLESPACE_NAME) {}
 
+        static State & getInstance(){
+            static State instance;
+            return instance;
         }
 
-        static State instance;
-
-        std::string tupleSpaceDirName{};
+        //tuplespace  = a dir named tuplespace in specified path, the dir contains file .tuplespace
         std::string tupleSpacePath{};
 
         friend void create(const std::string&, const std::string&);
