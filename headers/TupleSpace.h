@@ -14,8 +14,7 @@
 #include "Pattern.h"
 #include "Constants.h"
 #include "State.h"
-#include "TupleSpaceCreateException.h"
-#include "TupleSpaceConnectionException.h"
+#include "Exceptions.h"
 #include "Signals.h"
 
 namespace Linda{

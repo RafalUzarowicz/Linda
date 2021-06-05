@@ -60,6 +60,13 @@ namespace Linda{
 
     class Tuple : public ISerializable {
     public:
+        enum SerializationCodes{
+            START = 0x80,
+            END,
+            INT,
+            FLOAT,
+            STRING
+        };
         Tuple() = default;
         ~Tuple() = default;
         Tuple(const Tuple&);
@@ -88,15 +95,8 @@ namespace Linda{
         std::vector<serialization_type> serialize() override;
         void deserialize(const std::vector<serialization_type>& vector) override;
 
-    private:
-        enum SerializationCodes{
-            START = 0x80,
-            END,
-            INT,
-            FLOAT,
-            STRING
-        };
 
+    private:
         EntriesVector entries;
         std::stringstream treePath;
     };
