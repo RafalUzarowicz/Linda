@@ -13,9 +13,6 @@
 #include "Constants.h"
 #include "Exceptions.h"
 
-//TODO:
-// - include maximum serialized length
-
 namespace Linda{
     enum class PatternEntryType{
         Equal,
