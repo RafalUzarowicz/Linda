@@ -59,6 +59,9 @@ namespace Linda{
         TupleValue value;
     };
 
+    static size_t INT_SIZE = sizeof(TupleEntry::int_type) / sizeof(ISerializable::serialization_type);
+    static size_t FLOAT_SIZE = sizeof(TupleEntry::float_type) / sizeof(ISerializable::serialization_type);
+
     class Tuple : public ISerializable {
     public:
         enum SerializationCodes{
@@ -68,7 +71,7 @@ namespace Linda{
             FLOAT,
             STRING
         };
-        Tuple() = default;
+        Tuple();
         ~Tuple() = default;
         Tuple(const Tuple&);
         explicit Tuple(const std::vector<ISerializable::serialization_type>&);
@@ -96,9 +99,10 @@ namespace Linda{
         std::vector<serialization_type> serialize() override;
         void deserialize(const std::vector<serialization_type>& vector) override;
 
-
+        void reset();
     private:
         EntriesVector entries;
+
         std::stringstream treePath;
     };
 }

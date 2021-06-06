@@ -39,6 +39,7 @@ std::string Linda::TupleEntry::to_string() const {
 
 Linda::Tuple::Tuple(const Tuple& tuple) {
     entries = tuple.entries;
+    serializedLength = tuple.serializedLength;
     treePath << tuple.treePath.str();
 }
 
@@ -49,18 +50,21 @@ Linda::Tuple::Tuple(const std::vector<ISerializable::serialization_type>& vec) {
 Linda::Tuple& Linda::Tuple::push(TupleEntry::int_type value){
     entries.emplace_back(value);
     treePath << 'i';
+    serializedLength += 2 + INT_SIZE;
     return *this;
 }
 
 Linda::Tuple& Linda::Tuple::push(TupleEntry::float_type value){
     entries.emplace_back(value);
     treePath << 'f';
+    serializedLength += 2 + FLOAT_SIZE;
     return *this;
 }
 
 Linda::Tuple& Linda::Tuple::push(TupleEntry::string_type value){
     entries.emplace_back(value);
     treePath << 's';
+    serializedLength += 2 + value.size();
     return *this;
 }
 
@@ -110,17 +114,17 @@ std::vector<ISerializable::serialization_type> Linda::Tuple::serialize() {
            }
     }
     data.emplace_back(Tuple::SerializationCodes::END);
+    serializedLength = data.size();
     return data;
 }
 
 void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
+    reset();
+
     serialization_type temp{};
     TupleEntry::int_type intTmp{};
     TupleEntry::float_type floatTmp{};
     TupleEntry::string_type strTmp{};
-
-    static size_t INT_SIZE = sizeof(TupleEntry::int_type) / sizeof(serialization_type);
-    static size_t FLOAT_SIZE = sizeof(TupleEntry::float_type) / sizeof(serialization_type);
 
     if(!vector.empty() && vector.size() > 2){
         if(vector.front() != Tuple::SerializationCodes::START || vector.back() != Tuple::SerializationCodes::END){
@@ -174,6 +178,18 @@ void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
             }
         }
     }
+
+    serializedLength = vector.size();
+}
+
+void Linda::Tuple::reset() {
+    treePath.clear();
+    serializedLength = 2;
+    entries.clear();
+}
+
+Linda::Tuple::Tuple() {
+    reset();
 }
 
 std::ostream& operator<<(std::ostream& stream, const Linda::Tuple& tuple){

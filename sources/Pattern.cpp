@@ -84,6 +84,7 @@ Linda::PatternEntryType Linda::PatternEntry::getType() const {
 Linda::PatternEntry::PatternEntry(const Linda::PatternEntry& patternEntry) = default;
 
 Linda::Pattern::Pattern(const Linda::Pattern& pattern) : entries(pattern.entries){
+    serializedLength = pattern.serializedLength;
     treePath << pattern.treePath.str();
 }
 
@@ -196,6 +197,7 @@ void Linda::Pattern::add(Linda::PatternEntryType type, Linda::TupleEntry::int_ty
         throw Linda::Exception::PatternAnyException("Can't use Any with specific value.");
     }else{
         entries.emplace_back(type, i);
+        serializedLength += 3 + INT_SIZE;
         treePath << "i";
     }
 }
@@ -208,6 +210,7 @@ void Linda::Pattern::add(Linda::PatternEntryType type, Linda::TupleEntry::float_
             throw Linda::Exception::PatternFloatException("Can't use Equal on float value.");
         default:
             entries.emplace_back(type, f);
+            serializedLength += 3 + FLOAT_SIZE;
             treePath << "f";
             break;
     }
@@ -218,6 +221,7 @@ void Linda::Pattern::add(Linda::PatternEntryType type, Linda::TupleEntry::string
         throw Linda::Exception::PatternAnyException("Can't use Any with specific value.");
     }else{
         entries.emplace_back(type, s);
+        serializedLength += 3 + s.size();
         treePath << "s";
     }
 }
@@ -229,14 +233,17 @@ void Linda::Pattern::add(PatternEntryType pType, Linda::TupleEntryType tType){
     switch (tType) {
         case Linda::TupleEntryType::Int:
             entries.emplace_back(Linda::PatternEntryType::Any, 0);
+            serializedLength += 3;
             treePath << 'i';
             break;
         case Linda::TupleEntryType::Float:
             entries.emplace_back(Linda::PatternEntryType::Any, 0.0f);
+            serializedLength += 3;
             treePath << 'f';
             break;
         case Linda::TupleEntryType::String:
             entries.emplace_back(Linda::PatternEntryType::Any, "");
+            serializedLength += 3;
             treePath << 's';
             break;
         default:
@@ -288,10 +295,13 @@ std::vector<ISerializable::serialization_type> Linda::Pattern::serialize() {
         }
     }
     data.emplace_back(Pattern::SerializationCodes::END);
+    serializedLength = data.size();
     return data;
 }
 
 void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) {
+    reset();
+
     serialization_type temp{};
     TupleEntry::int_type intTmp{};
     TupleEntry::float_type floatTmp{};
@@ -300,9 +310,6 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
     TupleEntryType typeTmp{};
     SerializationCodes code{};
     PatternEntryType pTypeTmp{};
-
-    static size_t INT_SIZE = sizeof(TupleEntry::int_type) / sizeof(serialization_type);
-    static size_t FLOAT_SIZE = sizeof(TupleEntry::float_type) / sizeof(serialization_type);
 
     if(!vector.empty() && vector.size() > 2){
         if(vector.front() != Pattern::SerializationCodes::START || vector.back() != Pattern::SerializationCodes::END){
@@ -365,4 +372,12 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
             }
         }
     }
+
+    serializedLength = vector.size();
+}
+
+void Linda::Pattern::reset() {
+    treePath.clear();
+    serializedLength = 2;
+    entries.clear();
 }

@@ -93,7 +93,6 @@ namespace Linda{
         auto end() { return entries.end(); }
 
         std::vector<serialization_type> serialize() override;
-
         void deserialize(const std::vector<serialization_type> &vector) override;
 
     private:
@@ -113,9 +112,10 @@ namespace Linda{
         static SerializationCodes typeToSerializationCode(PatternEntryType);
         static PatternEntryType serializationCodeToType(SerializationCodes);
 
+        void reset();
+
         PatternsVector entries;
         std::stringstream treePath;
-        std::vector<std::stringstream> allTreePaths;
     };
 }
 

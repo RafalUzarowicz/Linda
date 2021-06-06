@@ -26,6 +26,8 @@ void testyRafalaXd(){
 
     std::cout<<t<<'\n';
     std::cout<<t.path()<<'\n';
+    std::cout<<t.getSerializedLength()<<'\n';
+    std::cout<<t.serialize().size()<<'\n';
 
     for(auto& c : t.serialize()){
         std::cout<< static_cast<unsigned>(c) <<' ';
@@ -64,10 +66,13 @@ void testyRafalaXd(){
     }
     std::cout<<'\n';
 
+    std::cout<<p.getSerializedLength()<<'\n';
     Linda::Pattern p2(p.serialize());
 
     std::cout<<p2<<'\n';
     std::cout<<p2.path()<<'\n';
+    std::cout<<p2.getSerializedLength()<<'\n';
+    std::cout<<p.serialize().size()<<'\n';
 
     std::cout << STR_BOOL(p.check(t2)) << '\n';
 
@@ -78,6 +83,9 @@ void testyRafalaXd(){
     Linda::Pattern pP;
 
     Linda::Pattern pP2(pP.serialize());
+
+    std::cout<<tT2.getSerializedLength()<<'\n';
+    std::cout<<pP2.getSerializedLength()<<'\n';
 
 //    // Wersja 1
 //    Linda::TupleSpace tuplespace;

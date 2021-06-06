@@ -19,6 +19,7 @@
 
 namespace Linda{
     //todo should there be a destroy function? what should it do to all the waiting processes?
+    // how about just removing tuplespace? other processes will get error trying to read files. There might be some problems with locked files removal
     void create(bool = true, const std::string& = DEFAULT_TUPLESPACE_DIR, const std::string& = DEFAULT_TUPLESPACE_NAME);
     void connect(const std::string& = DEFAULT_TUPLESPACE_PATH);
     void output(Tuple);
