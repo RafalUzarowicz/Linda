@@ -23,7 +23,20 @@ namespace Linda::Exception{
 
     };
 
+    class TupleException : public std::runtime_error{
+    public:
+        explicit TupleException(const std::string& msg) : std::runtime_error(msg){}
+    };
 
+    class TupleDeserializationError : public TupleException{
+    public:
+        explicit TupleDeserializationError(const std::string& msg) : TupleException(msg){}
+    };
+
+    class PatternException : public std::runtime_error{
+    public:
+        explicit PatternException(const std::string& msg) : std::runtime_error(msg){}
+    };
 }
 
 #endif //LINDA_EXCEPTIONS_H

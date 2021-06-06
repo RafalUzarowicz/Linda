@@ -3,8 +3,6 @@
 
 #include <vector>
 
-// TODO: serialized vector stored inside or created on call?
-
 class ISerializable{
 public:
     using serialization_type = unsigned char;

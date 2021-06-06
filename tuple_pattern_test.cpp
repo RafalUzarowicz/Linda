@@ -71,6 +71,14 @@ void testyRafalaXd(){
 
     std::cout << STR_BOOL(p.check(t2)) << '\n';
 
+    Linda::Tuple tT;
+
+    Linda::Tuple tT2(tT.serialize());
+
+    Linda::Pattern pP;
+
+    Linda::Pattern pP2(pP.serialize());
+
 //    // Wersja 1
 //    Linda::TupleSpace tuplespace;
 //
@@ -88,20 +96,20 @@ void testyRafalaXd(){
 //    tuplespace.readTuple(p2);
 //    tuplespace.readTuple(p2, 1000);
 
-    // Wersja 2
-    Linda::create();
-    Linda::create("tuplespace");
-    Linda::create("tuplespace", "./");
-
-    Linda::connect("./tuplespace");
-
-    Linda::output(t);
-
-    Linda::input(p);
-    Linda::input(p, std::chrono::milliseconds (1000));
-
-    Linda::readTuple(p2);
-    Linda::readTuple(p2, std::chrono::milliseconds(1000));
+//    // Wersja 2
+//    Linda::create();
+//    Linda::create("tuplespace");
+//    Linda::create("tuplespace", "./");
+//
+//    Linda::connect("./tuplespace");
+//
+//    Linda::output(t);
+//
+//    Linda::input(p);
+//    Linda::input(p, std::chrono::milliseconds (1000));
+//
+//    Linda::readTuple(p2);
+//    Linda::readTuple(p2, std::chrono::milliseconds(1000));
 }
 
 int main(){

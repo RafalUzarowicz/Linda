@@ -114,37 +114,39 @@ std::vector<ISerializable::serialization_type> Linda::Tuple::serialize() {
 }
 
 void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
-    // TODO: custom exceptions instead of bool
     serialization_type temp{};
     TupleEntry::int_type intTmp{};
     TupleEntry::float_type floatTmp{};
     TupleEntry::string_type strTmp{};
-    bool isDeserializable = true;
     if(!vector.empty() && vector.size() > 2){
         if(vector.front() != Tuple::SerializationCodes::START || vector.back() != Tuple::SerializationCodes::END){
-            isDeserializable = false;
+            throw Linda::Exception::TupleDeserializationError("Wrong data format.");
         }else{
-            for(size_t i{1}; isDeserializable && i < vector.size()-1;){
+            for(size_t i{1}; i < vector.size()-1;){
                 temp = vector[i++];
                 switch (temp) {
                     case Tuple::SerializationCodes::INT:
+                        if(i + sizeof(TupleEntry::int_type) / sizeof(serialization_type) >= vector.size()-1){
+                            throw Linda::Exception::TupleDeserializationError("Not enough size for INT.");
+                        }
                         memcpy(&intTmp, vector.data()+i, sizeof(TupleEntry::int_type) / sizeof(serialization_type));
                         push(intTmp);
                         i += sizeof(TupleEntry::int_type) / sizeof(serialization_type);
-                        if(i >= vector.size()-1 || vector[i] != Tuple::SerializationCodes::INT){
-                            isDeserializable = false;
-                            break;
+                        if(vector[i] != Tuple::SerializationCodes::INT){
+                            throw Linda::Exception::TupleDeserializationError("Wrong data format while reading INT.");
                         }else{
                             ++i;
                         }
                         break;
                     case Tuple::SerializationCodes::FLOAT:
+                        if(i + sizeof(TupleEntry::float_type) / sizeof(serialization_type) >= vector.size()-1){
+                            throw Linda::Exception::TupleDeserializationError("Not enough size for FLOAT.");
+                        }
                         memcpy(&floatTmp, vector.data()+i, sizeof(TupleEntry::float_type) / sizeof(serialization_type));
                         push(floatTmp);
                         i += sizeof(TupleEntry::float_type) / sizeof(serialization_type);
-                        if(i >= vector.size()-1 || vector[i] != Tuple::SerializationCodes::FLOAT){
-                            isDeserializable = false;
-                            break;
+                        if(vector[i] != Tuple::SerializationCodes::FLOAT){
+                            throw Linda::Exception::TupleDeserializationError("Wrong data format while reading FLOAT.");
                         }else{
                             ++i;
                         }
@@ -153,25 +155,20 @@ void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
                         strTmp.clear();
                         for(int32_t j{}; vector[i] != Tuple::SerializationCodes::STRING; ++j){
                             strTmp.push_back(vector[i++]);
-                            if( j > Linda::MAX_STRING_LENGTH || i >= vector.size()-1){
-                                isDeserializable = false;
-                                break;
+                            if( j > Linda::MAX_STRING_LENGTH){
+                                throw Linda::Exception::TupleDeserializationError("STRING too long.");
+                            }else if(i >= vector.size()-1){
+                                throw Linda::Exception::TupleDeserializationError("Wrong data format while reading STRING.");
                             }
                         }
-                        if(isDeserializable){
-                            push(strTmp);
-                            ++i;
-                        }
+                        push(strTmp);
+                        ++i;
                         break;
                     default:
-                        isDeserializable = false;
-                        break;
+                        throw Linda::Exception::TupleDeserializationError("Unknown serialization code.");
                 }
             }
         }
-    }
-    if(!isDeserializable){
-        entries.clear();
     }
 }
 

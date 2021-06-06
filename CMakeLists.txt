@@ -5,7 +5,7 @@ project(LINDA)
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-Wall -Wextra -pedantic)
 
-include_directories(headers sources)
+include_directories(headers)
 
 file(GLOB SOURCES CONFIGURE_DEPENDS "sources/*.cpp")
 
@@ -15,7 +15,7 @@ add_executable(LINDA)
 target_sources(LINDA PRIVATE main.cpp ${SOURCES})
 
 add_executable(RAFAL)
-target_sources(RAFAL PRIVATE rafal.cpp ${SOURCES})
+target_sources(RAFAL PRIVATE tuple_pattern_test.cpp ${SOURCES})
 
 add_executable(LINDA_TEST)
 target_sources(LINDA_TEST PRIVATE main_linda_test.cpp ${SOURCES})

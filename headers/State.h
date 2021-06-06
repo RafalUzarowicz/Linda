@@ -12,7 +12,6 @@ namespace Linda{
         State() : tupleSpacePath(DEFAULT_TUPLESPACE_DIR + "/" + DEFAULT_TUPLESPACE_NAME) {
             connected = false;
         }
-
         static State & getInstance(){
             static State instance;
             return instance;
