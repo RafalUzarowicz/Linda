@@ -169,7 +169,7 @@ Linda::Pattern::SerializationCodes Linda::Pattern::typeToSerializationCode(Linda
         case PatternEntryType::Any:
             return ANY;
         default:
-            throw Linda::Exception::PatternTypeException("Unknown type for conversion.");
+            throw Linda::Exception::Pattern::TypeException("Unknown type for conversion.");
     }
 }
 
@@ -188,13 +188,13 @@ Linda::PatternEntryType Linda::Pattern::serializationCodeToType(SerializationCod
         case ANY:
             return PatternEntryType::Any;
         default:
-            throw Linda::Exception::PatternSerializationCodeException("Unknown code for conversion.");
+            throw Linda::Exception::Pattern::SerializationCodeException("Unknown code for conversion.");
     }
 }
 
 void Linda::Pattern::add(Linda::PatternEntryType type, Linda::TupleEntry::int_type i) {
     if (type == PatternEntryType::Any) {
-        throw Linda::Exception::PatternAnyException("Can't use Any with specific value.");
+        throw Linda::Exception::Pattern::AnyException("Can't use Any with specific value.");
     }else{
         entries.emplace_back(type, i);
         serializedLength += 3 + INT_SIZE;
@@ -205,9 +205,9 @@ void Linda::Pattern::add(Linda::PatternEntryType type, Linda::TupleEntry::int_ty
 void Linda::Pattern::add(Linda::PatternEntryType type, Linda::TupleEntry::float_type f) {
     switch (type) {
         case PatternEntryType::Any:
-            throw Linda::Exception::PatternAnyException("Can't use Any with specific value.");
+            throw Linda::Exception::Pattern::AnyException("Can't use Any with specific value.");
         case PatternEntryType::Equal:
-            throw Linda::Exception::PatternFloatException("Can't use Equal on float value.");
+            throw Linda::Exception::Pattern::FloatException("Can't use Equal on float value.");
         default:
             entries.emplace_back(type, f);
             serializedLength += 3 + FLOAT_SIZE;
@@ -218,7 +218,7 @@ void Linda::Pattern::add(Linda::PatternEntryType type, Linda::TupleEntry::float_
 
 void Linda::Pattern::add(Linda::PatternEntryType type, Linda::TupleEntry::string_type s) {
     if (type == PatternEntryType::Any) {
-        throw Linda::Exception::PatternAnyException("Can't use Any with specific value.");
+        throw Linda::Exception::Pattern::AnyException("Can't use Any with specific value.");
     }else{
         entries.emplace_back(type, s);
         serializedLength += 3 + s.size();
@@ -228,7 +228,7 @@ void Linda::Pattern::add(Linda::PatternEntryType type, Linda::TupleEntry::string
 
 void Linda::Pattern::add(PatternEntryType pType, Linda::TupleEntryType tType){
     if(pType != PatternEntryType::Any){
-        throw Linda::Exception::PatternAnyException("TupleEntryType can be used only with PatternEntryType::Any.");
+        throw Linda::Exception::Pattern::AnyException("TupleEntryType can be used only with PatternEntryType::Any.");
     }
     switch (tType) {
         case Linda::TupleEntryType::Int:
@@ -247,7 +247,7 @@ void Linda::Pattern::add(PatternEntryType pType, Linda::TupleEntryType tType){
             treePath << 's';
             break;
         default:
-            throw Linda::Exception::PatternTypeException("Unknown tuple type.");
+            throw Linda::Exception::Pattern::TypeException("Unknown tuple type.");
     }
 }
 
@@ -313,7 +313,7 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
 
     if(!vector.empty() && vector.size() > 2){
         if(vector.front() != Pattern::SerializationCodes::START || vector.back() != Pattern::SerializationCodes::END){
-            throw Linda::Exception::PatternDeserializationException("Wrong data format.");
+            throw Linda::Exception::Pattern::DeserializationException("Wrong data format.");
         }else{
             for(size_t i{1}; i < vector.size()-1;){
                 switch (vector[i]) {
@@ -327,7 +327,7 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
                         typeTmp = TupleEntryType::String;
                         break;
                     default:
-                        throw Linda::Exception::PatternDeserializationException("Unknown serialization code.");
+                        throw Linda::Exception::Pattern::DeserializationException("Unknown serialization code.");
                 }
                 code = static_cast<SerializationCodes>(vector[i++]);
                 temp = vector[i++];
@@ -338,7 +338,7 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
                     switch (typeTmp) {
                         case TupleEntryType::Int:
                             if(i + INT_SIZE >= vector.size()-1){
-                                throw Linda::Exception::PatternDeserializationException("Not enough data for INT.");
+                                throw Linda::Exception::Pattern::DeserializationException("Not enough data for INT.");
                             }
                             memcpy(&intTmp, vector.data()+i, INT_SIZE);
                             add(pTypeTmp, intTmp);
@@ -346,7 +346,7 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
                             break;
                         case TupleEntryType::Float:
                             if(i + FLOAT_SIZE >= vector.size()-1){
-                                throw Linda::Exception::PatternDeserializationException("Not enough data for FLOAT.");
+                                throw Linda::Exception::Pattern::DeserializationException("Not enough data for FLOAT.");
                             }
                             memcpy(&floatTmp, vector.data()+i, FLOAT_SIZE);
                             add(pTypeTmp, floatTmp);
@@ -357,9 +357,9 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
                             for(int32_t j{}; vector[i] != Pattern::SerializationCodes::STRING; ++j){
                                 strTmp.push_back(vector[i++]);
                                 if(j > Linda::MAX_STRING_LENGTH){
-                                    throw Linda::Exception::PatternDeserializationException("STRING too long.");
+                                    throw Linda::Exception::Pattern::DeserializationException("STRING too long.");
                                 }else if(i >= vector.size()-1){
-                                    throw Linda::Exception::PatternDeserializationException("Wrong data format while reading STRING.");
+                                    throw Linda::Exception::Pattern::DeserializationException("Wrong data format while reading STRING.");
                                 }
                             }
                             add(pTypeTmp, strTmp);
@@ -367,7 +367,7 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
                     }
                 }
                 if(code != static_cast<SerializationCodes>(vector[i++])){
-                    throw Linda::Exception::PatternDeserializationException("Wrong serialization code.");
+                    throw Linda::Exception::Pattern::DeserializationException("Wrong serialization code.");
                 }
             }
         }

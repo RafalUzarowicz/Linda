@@ -128,33 +128,33 @@ void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
 
     if(!vector.empty() && vector.size() > 2){
         if(vector.front() != Tuple::SerializationCodes::START || vector.back() != Tuple::SerializationCodes::END){
-            throw Linda::Exception::TupleDeserializationError("Wrong data format.");
+            throw Linda::Exception::Tuple::DeserializationError("Wrong data format.");
         }else{
             for(size_t i{1}; i < vector.size()-1;){
                 temp = vector[i++];
                 switch (temp) {
                     case Tuple::SerializationCodes::INT:
                         if(i + INT_SIZE >= vector.size()-1){
-                            throw Linda::Exception::TupleDeserializationError("Not enough data for INT.");
+                            throw Linda::Exception::Tuple::DeserializationError("Not enough data for INT.");
                         }
                         memcpy(&intTmp, vector.data()+i, INT_SIZE);
                         push(intTmp);
                         i += INT_SIZE;
                         if(vector[i] != Tuple::SerializationCodes::INT){
-                            throw Linda::Exception::TupleDeserializationError("Wrong data format while reading INT.");
+                            throw Linda::Exception::Tuple::DeserializationError("Wrong data format while reading INT.");
                         }else{
                             ++i;
                         }
                         break;
                     case Tuple::SerializationCodes::FLOAT:
                         if(i + FLOAT_SIZE >= vector.size()-1){
-                            throw Linda::Exception::TupleDeserializationError("Not enough data for FLOAT.");
+                            throw Linda::Exception::Tuple::DeserializationError("Not enough data for FLOAT.");
                         }
                         memcpy(&floatTmp, vector.data()+i, FLOAT_SIZE);
                         push(floatTmp);
                         i += FLOAT_SIZE;
                         if(vector[i] != Tuple::SerializationCodes::FLOAT){
-                            throw Linda::Exception::TupleDeserializationError("Wrong data format while reading FLOAT.");
+                            throw Linda::Exception::Tuple::DeserializationError("Wrong data format while reading FLOAT.");
                         }else{
                             ++i;
                         }
@@ -164,16 +164,16 @@ void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
                         for(int32_t j{}; vector[i] != Tuple::SerializationCodes::STRING; ++j){
                             strTmp.push_back(vector[i++]);
                             if( j > Linda::MAX_STRING_LENGTH){
-                                throw Linda::Exception::TupleDeserializationError("STRING too long.");
+                                throw Linda::Exception::Tuple::DeserializationError("STRING too long.");
                             }else if(i >= vector.size()-1){
-                                throw Linda::Exception::TupleDeserializationError("Wrong data format while reading STRING.");
+                                throw Linda::Exception::Tuple::DeserializationError("Wrong data format while reading STRING.");
                             }
                         }
                         push(strTmp);
                         ++i;
                         break;
                     default:
-                        throw Linda::Exception::TupleDeserializationError("Unknown serialization code.");
+                        throw Linda::Exception::Tuple::DeserializationError("Unknown serialization code.");
                 }
             }
         }

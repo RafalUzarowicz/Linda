@@ -22,46 +22,49 @@ namespace Linda::Exception{
                 : TupleSpaceException("Could not connect to tuplespace." + msg) {}
 
     };
+    namespace Tuple{
+        class BaseException : public std::runtime_error{
+        public:
+            explicit BaseException(const std::string& msg) : std::runtime_error(msg){}
+        };
 
-    class TupleException : public std::runtime_error{
-    public:
-        explicit TupleException(const std::string& msg) : std::runtime_error(msg){}
-    };
+        class DeserializationError : public BaseException{
+        public:
+            explicit DeserializationError(const std::string& msg) : BaseException(msg){}
+        };
+    }
 
-    class TupleDeserializationError : public TupleException{
-    public:
-        explicit TupleDeserializationError(const std::string& msg) : TupleException(msg){}
-    };
+    namespace Pattern{
+        class BaseException : public std::runtime_error{
+        public:
+            explicit BaseException(const std::string& msg) : std::runtime_error(msg){}
+        };
 
-    class PatternException : public std::runtime_error{
-    public:
-        explicit PatternException(const std::string& msg) : std::runtime_error(msg){}
-    };
+        class DeserializationException : public BaseException{
+        public:
+            explicit DeserializationException(const std::string& msg) : BaseException(msg){}
+        };
 
-    class PatternDeserializationException : public PatternException{
-    public:
-        explicit PatternDeserializationException(const std::string& msg) : PatternException(msg){}
-    };
+        class TypeException : public BaseException{
+        public:
+            explicit TypeException(const std::string& msg) : BaseException(msg){}
+        };
 
-    class PatternTypeException : public PatternException{
-    public:
-        explicit PatternTypeException(const std::string& msg) : PatternException(msg){}
-    };
+        class SerializationCodeException : public BaseException{
+        public:
+            explicit SerializationCodeException(const std::string& msg) : BaseException(msg){}
+        };
 
-    class PatternSerializationCodeException : public PatternException{
-    public:
-        explicit PatternSerializationCodeException(const std::string& msg) : PatternException(msg){}
-    };
+        class AnyException : public BaseException{
+        public:
+            explicit AnyException(const std::string& msg) : BaseException(msg){}
+        };
 
-    class PatternAnyException : public PatternException{
-    public:
-        explicit PatternAnyException(const std::string& msg) : PatternException(msg){}
-    };
-
-    class PatternFloatException : public PatternException{
-    public:
-        explicit PatternFloatException(const std::string& msg) : PatternException(msg){}
-    };
+        class FloatException : public BaseException{
+        public:
+            explicit FloatException(const std::string& msg) : BaseException(msg){}
+        };
+    }
 }
 
 #endif //LINDA_EXCEPTIONS_H
