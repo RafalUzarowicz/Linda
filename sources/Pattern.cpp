@@ -292,7 +292,6 @@ std::vector<ISerializable::serialization_type> Linda::Pattern::serialize() {
 }
 
 void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) {
-    // TODO: refactor
     serialization_type temp{};
     TupleEntry::int_type intTmp{};
     TupleEntry::float_type floatTmp{};
@@ -301,6 +300,9 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
     TupleEntryType typeTmp{};
     SerializationCodes code{};
     PatternEntryType pTypeTmp{};
+
+    static size_t INT_SIZE = sizeof(TupleEntry::int_type) / sizeof(serialization_type);
+    static size_t FLOAT_SIZE = sizeof(TupleEntry::float_type) / sizeof(serialization_type);
 
     if(!vector.empty() && vector.size() > 2){
         if(vector.front() != Pattern::SerializationCodes::START || vector.back() != Pattern::SerializationCodes::END){
@@ -328,20 +330,20 @@ void Linda::Pattern::deserialize(const std::vector<serialization_type> &vector) 
                 }else{
                     switch (typeTmp) {
                         case TupleEntryType::Int:
-                            if(i + sizeof(TupleEntry::int_type) / sizeof(serialization_type) >= vector.size()-1){
+                            if(i + INT_SIZE >= vector.size()-1){
                                 throw Linda::Exception::PatternDeserializationException("Not enough data for INT.");
                             }
-                            memcpy(&intTmp, vector.data()+i, sizeof(TupleEntry::int_type) / sizeof(serialization_type));
+                            memcpy(&intTmp, vector.data()+i, INT_SIZE);
                             add(pTypeTmp, intTmp);
-                            i += sizeof(TupleEntry::int_type) / sizeof(serialization_type);
+                            i += INT_SIZE;
                             break;
                         case TupleEntryType::Float:
-                            if(i + sizeof(TupleEntry::float_type) / sizeof(serialization_type) >= vector.size()-1){
+                            if(i + FLOAT_SIZE >= vector.size()-1){
                                 throw Linda::Exception::PatternDeserializationException("Not enough data for FLOAT.");
                             }
-                            memcpy(&floatTmp, vector.data()+i, sizeof(TupleEntry::float_type) / sizeof(serialization_type));
+                            memcpy(&floatTmp, vector.data()+i, FLOAT_SIZE);
                             add(pTypeTmp, floatTmp);
-                            i += sizeof(TupleEntry::float_type) / sizeof(serialization_type);
+                            i += FLOAT_SIZE;
                             break;
                         case TupleEntryType::String:
                             strTmp.clear();
