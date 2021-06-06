@@ -11,6 +11,7 @@
 #include "Tuple.h"
 #include "ISerializable.h"
 #include "Constants.h"
+#include "Exceptions.h"
 
 //TODO:
 // - include maximum serialized length

@@ -37,6 +37,31 @@ namespace Linda::Exception{
     public:
         explicit PatternException(const std::string& msg) : std::runtime_error(msg){}
     };
+
+    class PatternDeserializationException : public PatternException{
+    public:
+        explicit PatternDeserializationException(const std::string& msg) : PatternException(msg){}
+    };
+
+    class PatternTypeException : public PatternException{
+    public:
+        explicit PatternTypeException(const std::string& msg) : PatternException(msg){}
+    };
+
+    class PatternSerializationCodeException : public PatternException{
+    public:
+        explicit PatternSerializationCodeException(const std::string& msg) : PatternException(msg){}
+    };
+
+    class PatternAnyException : public PatternException{
+    public:
+        explicit PatternAnyException(const std::string& msg) : PatternException(msg){}
+    };
+
+    class PatternFloatException : public PatternException{
+    public:
+        explicit PatternFloatException(const std::string& msg) : PatternException(msg){}
+    };
 }
 
 #endif //LINDA_EXCEPTIONS_H
