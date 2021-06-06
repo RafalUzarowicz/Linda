@@ -17,7 +17,6 @@ void Linda::create(bool no_exist_err, const std::string& path, const std::string
             throw Linda::Exception::TupleSpaceCreateException(msg);
         }
     }
-    //todo should create folder structure?
     std::ofstream file(tuplespace_path.string() + "/.tuplespace");
     file.close();
 }
@@ -80,13 +79,15 @@ void Linda::output(Linda::Tuple tuple) {
     }
 
     //todo move padding to tuple class logic
-    std::string tuple_str = tuple.to_string();
+    auto serialized = tuple.serialize();
+    //todo guard against too long tuples
     unsigned char entry[Linda::ENTRY_SIZE];
     memset(entry, int('-'), sizeof(entry));
     entry[0] = Linda::BUSY_FLAG;
-    memcpy(entry + 1, tuple_str.c_str(), std::min(Linda::MAX_TUPLE_SIZE, tuple_str.size()));
+    for (unsigned long i = 0; i< serialized.size(); i++){
+        entry[i+1] = serialized[i];
+    }
     entry[Linda::ENTRY_SIZE -1] = '\n';
-
 
     if(write(fd, entry, Linda::ENTRY_SIZE) == -1){
         lock.l_type = F_UNLCK;
@@ -148,11 +149,12 @@ Linda::Tuple Linda::readTuple(Linda::Pattern pattern, std::chrono::milliseconds 
                 std::vector<ISerializable::serialization_type> tuple_vec;
                 int i = 1;
                 //fixme handle unsigned chars -> can't really read them from file or do proper substring comparison
-                while( read_buffer[i]!= Tuple::SerializationCodes::END && i < ENTRY_SIZE){
-                    tuple_vec.push_back((unsigned char)i);
+                unsigned char c = static_cast<unsigned char>(read_buffer[i]);
+                while( c != Tuple::SerializationCodes::END && i < ENTRY_SIZE-1){
+                    c = static_cast<unsigned char>(read_buffer[i]);
+                    tuple_vec.push_back(c);
                     i++;
                 }
-                tuple_vec.push_back(Tuple::SerializationCodes::END);
                 Linda::Tuple t;
                 t.deserialize(tuple_vec);
                 if(pattern.check(t)){
@@ -163,21 +165,57 @@ Linda::Tuple Linda::readTuple(Linda::Pattern pattern, std::chrono::milliseconds 
             }
         }
 
-        //todo implement queuing process in every loop
+        //queue process
         pid_t this_pid = getpid();
-        std::string process_entry = pattern.to_string();
-        auto pattern_entry_size = process_entry.size() + 2;
-        auto* buffer = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * (pattern_entry_size)));
+        std::cout<<sizeof (pid_t)<<std::endl;
+        auto serialized_pattern = pattern.serialize();
+        auto pattern_entry_size = serialized_pattern.size() + 1;
+        auto* buffer = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * (pattern_entry_size) + sizeof (pid_t)));
         buffer[0] = (unsigned char) this_pid;
-        memcpy(buffer +1, process_entry.c_str(), process_entry.size());
-        buffer[pattern_entry_size-1] = '\n';
+
+        memcpy(buffer, &this_pid, sizeof (pid_t));
+        for(unsigned long i = 0; i < pattern_entry_size; i++){
+            buffer[i+1] = serialized_pattern[i];
+        }
+        buffer[pattern_entry_size-1 + sizeof (pid_t)] = '\n';
 
         std::string queue = state.tupleSpacePath + "/" + path + "-queue.linda";
-        int queue_fd = open(queue.c_str(), O_CREAT | O_APPEND, 0666);
-        write(queue_fd, buffer, pattern_entry_size);
+        int queue_fd = open(queue.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
+
+        struct flock lock;
+        memset(&lock, 0, sizeof (lock));
+        lock.l_type = F_WRLCK | F_RDLCK;
+        lock.l_whence = SEEK_SET;
+        lock.l_start = 0;
+        lock.l_len = 0; //lock whole file
+
+        if(queue_fd < 0){
+            free(buffer);
+            std::cout<<strerror(errno)<<std::endl;
+            throw Linda::Exception::TupleSpaceException("Exception while opening queue file.");
+        }
+        if(fcntl(fd, F_SETLKW, &lock) == -1){
+            close(fd);
+            std::cerr<<strerror(errno)<<std::endl;
+            throw Linda::Exception::TupleSpaceException("Could not acquire queue file lock");
+        }
+        if(write(queue_fd, buffer, pattern_entry_size)< 0){
+            free(buffer);
+            lock.l_type = F_UNLCK;
+            if(fcntl(fd, F_SETLKW, &lock) == -1){
+                close(fd);
+                throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+            }
+            std::cout<<strerror(errno)<<std::endl;
+            throw Linda::Exception::TupleSpaceException("Exception while queuing the process.");
+        }
+        lock.l_type = F_UNLCK;
+        if(fcntl(fd, F_SETLKW, &lock) == -1){
+            close(fd);
+            throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+        }
         close(queue_fd);
         free(buffer);
-
     }
 
     //todo sleep waiting for a signal
