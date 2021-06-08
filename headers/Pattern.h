@@ -35,6 +35,7 @@ namespace Linda{
         [[nodiscard]] const PatternValue& getPattern() const;
 
         [[nodiscard]] const Linda::TupleEntry::TupleValue& getValue() const {
+            //TODO: Throw exception for Any PatternEntryType
             return pattern.second;
         }
 
