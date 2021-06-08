@@ -12,17 +12,17 @@ namespace Linda {
                 throw Exception::TupleSpaceException("Could not open tuple file. " + errno_msg);
             }
 
-            char read_buffer[ENTRY_SIZE];
+            unsigned char read_buffer[ENTRY_SIZE];
             memset(&read_buffer, 0, sizeof(read_buffer));
             //todo set lock
-            while (::read(fd, read_buffer, sizeof(ENTRY_SIZE)) > 0) {
+            while (::read(fd, read_buffer, ENTRY_SIZE) > 0) {
                 //todo release lock
                 if (read_buffer[0] == Linda::BUSY_FLAG) {
                     std::vector<ISerializable::serialization_type> tuple_vec;
                     unsigned long i = 1;
-                    auto c = static_cast<unsigned char> (read_buffer[i]);
+                    auto c = read_buffer[i];
                     while (c != Tuple::SerializationCodes::END && i < ENTRY_SIZE - 1) {
-                        c = static_cast<unsigned char>(read_buffer[i]);
+                        c = read_buffer[i];
                         tuple_vec.push_back(c);
                         i++;
                     }
@@ -38,15 +38,18 @@ namespace Linda {
         }
 
         void enqueue(Pattern pattern, const std::string &file_path, const char &type) {
+            //todo should find first empty spot instead of appending
             pid_t pid = getpid();
             auto serialized_pattern = pattern.serialize();
             unsigned char buffer[MAX_TUPLE_SIZE + LIST_HEADER_SIZE + 1];
+            memset(buffer, (int) '-', MAX_TUPLE_SIZE + LIST_HEADER_SIZE + 1);
 
             buffer[0] = type;
             memcpy(buffer + 1, &pid, sizeof(pid));
-            for (unsigned long i = 0; i < MAX_TUPLE_SIZE - LIST_HEADER_SIZE; i++) {
+            for (unsigned long i = 0; i < sizeof (serialized_pattern); i++) {
                 buffer[i + LIST_HEADER_SIZE] = serialized_pattern[i];
             }
+
             buffer[LIST_HEADER_SIZE + MAX_TUPLE_SIZE] = '\n'; //for readability
 
             int queue_fd = open(file_path.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
@@ -66,8 +69,8 @@ namespace Linda {
                 std::string errno_msg = strerror(errno);
                 throw Exception::TupleSpaceException("Could not acquire queue file lock. " + errno_msg);
             }
-
-            if (write(queue_fd, buffer, MAX_TUPLE_SIZE + LIST_HEADER_SIZE + 1) < 0) {
+            auto written = write(queue_fd, buffer, MAX_TUPLE_SIZE + LIST_HEADER_SIZE + 1);
+            if (written < 0) {
                 lock.l_type = F_UNLCK;
                 if (fcntl(queue_fd, F_SETLKW, &lock) == -1) {
                     close(queue_fd);
@@ -144,7 +147,7 @@ namespace Linda {
 
         //prep read buffer
         unsigned char read_buffer[Linda::ENTRY_SIZE];
-        memset(&read_buffer, 0, sizeof(read_buffer));
+        memset(&read_buffer, (int) '-', sizeof(read_buffer));
 
         //lock file
         struct flock lock;
