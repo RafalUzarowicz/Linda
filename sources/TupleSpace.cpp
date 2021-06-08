@@ -2,9 +2,7 @@
 
 namespace Linda {
     namespace {
-        Tuple
-        find(const Pattern &pattern, const std::string &file_path, bool remove, std::chrono::milliseconds timeout) {
-            //todo implement removing while browsing
+        Tuple find(const Pattern &pattern, const std::string &file_path, bool remove) {
             //todo implement timeout
             int fd = open(file_path.c_str(), O_CREAT | O_RDWR, 0666);
             if (fd < 0) {
@@ -14,9 +12,23 @@ namespace Linda {
 
             unsigned char read_buffer[ENTRY_SIZE];
             memset(&read_buffer, 0, sizeof(read_buffer));
-            //todo set lock
-            while (::read(fd, read_buffer, ENTRY_SIZE) > 0) {
-                //todo release lock
+
+            //set lock
+            struct flock lock{};
+            memset(&lock, 0, sizeof(lock));
+            lock.l_type = F_WRLCK | F_RDLCK;
+            lock.l_whence = SEEK_CUR;
+            lock.l_len = ENTRY_SIZE;
+
+
+            while (::read(fd, read_buffer, ENTRY_SIZE) == ENTRY_SIZE) {
+                if(!remove){    //lock can be released immediately if record is not going to be modified
+                    lock.l_type = F_UNLCK;
+                    if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                        close(fd);
+                        throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+                    }
+                }
                 if (read_buffer[0] == Linda::BUSY_FLAG) {
                     std::vector<ISerializable::serialization_type> tuple_vec;
                     unsigned long i = 1;
@@ -29,8 +41,28 @@ namespace Linda {
                     Tuple t;
                     t.deserialize(tuple_vec);
                     if (pattern.check(t)) {
+                        if(remove){
+                            //go back one record
+                            lseek(fd, -ENTRY_SIZE, SEEK_CUR);
+                            //set flag to empty
+                            char busy = EMPTY_FLAG;
+                            write(fd, &busy, sizeof (char));
+                            //release lock
+                            lock.l_type = F_UNLCK;
+                            if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                                close(fd);
+                                throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+                            }
+                        }
                         close(fd);
                         return t;
+                    }
+                }
+                if(remove){ //release lock for modifying operation
+                    lock.l_type = F_UNLCK;
+                    if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                        close(fd);
+                        throw Linda::Exception::TupleSpaceException("Error releasing file lock");
                     }
                 }
             }
@@ -49,7 +81,6 @@ namespace Linda {
             for (unsigned long i = 0; i < sizeof (serialized_pattern); i++) {
                 buffer[i + LIST_HEADER_SIZE] = serialized_pattern[i];
             }
-
             buffer[LIST_HEADER_SIZE + MAX_TUPLE_SIZE] = '\n'; //for readability
 
             int queue_fd = open(file_path.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
@@ -92,6 +123,11 @@ namespace Linda {
         void dequeue(const std::vector<std::string> &queue_paths) {
             //todo implement
         }
+
+        void search_queue(Tuple tuple){
+            //todo implement
+        }
+
     }
 
     void create(bool no_exist_err, const std::string &path, const std::string &name) {
@@ -130,6 +166,9 @@ namespace Linda {
     }
 
     void output(Tuple tuple) {
+        if(tuple.getSerializedLength() > MAX_TUPLE_SIZE){
+            throw Exception::TupleSpaceException("Exceeding max length after serialization");
+        }
         if (!State::getInstance().connected) {
             throw Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
         }
@@ -150,7 +189,7 @@ namespace Linda {
         memset(&read_buffer, (int) '-', sizeof(read_buffer));
 
         //lock file
-        struct flock lock;
+        struct flock lock{};
         memset(&lock, 0, sizeof(lock));
         lock.l_type = F_WRLCK | F_RDLCK;
         lock.l_whence = SEEK_SET;
@@ -167,14 +206,14 @@ namespace Linda {
         ssize_t bytes_read;
         bytes_read = ::read(fd, read_buffer, Linda::ENTRY_SIZE);
         while (bytes_read == Linda::ENTRY_SIZE) {
-            if ((read_buffer[0] & EMPTY_FLAG) == EMPTY_FLAG) {
+            if (read_buffer[0]  == EMPTY_FLAG) {
+                lseek(fd, - static_cast<long>(ENTRY_SIZE), SEEK_CUR);
                 break;
             }
             bytes_read = ::read(fd, read_buffer, Linda::ENTRY_SIZE);
         }
 
         auto serialized = tuple.serialize();
-        //todo guard against too long tuples
         unsigned char entry[Linda::ENTRY_SIZE];
         memset(entry, int('-'), sizeof(entry));
         entry[0] = Linda::BUSY_FLAG;
@@ -183,8 +222,8 @@ namespace Linda {
         }
         entry[Linda::ENTRY_SIZE - 1] = '\n';
 
+        lock.l_type = F_UNLCK;
         if (write(fd, entry, Linda::ENTRY_SIZE) == -1) {
-            lock.l_type = F_UNLCK;
             if (fcntl(fd, F_SETLKW, &lock) == -1) {
                 close(fd);
                 std::cerr << strerror(errno) << std::endl;
@@ -195,20 +234,21 @@ namespace Linda {
         }
 
         //unlock
-        lock.l_type = F_UNLCK;
         if (fcntl(fd, F_SETLKW, &lock) == -1) {
             close(fd);
             throw Exception::TupleSpaceException("Error releasing file lock");
         }
         close(fd);
 
-
-        //todo find waiting processes and send signals
+        search_queue(tuple);
     }
 
     //to jest usuwające
     Tuple input(Pattern pattern, std::chrono::milliseconds timeout) {
         std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
+        if(pattern.getSerializedLength() > MAX_TUPLE_SIZE){
+            throw Exception::TupleSpaceException("Exceeding max length after serialization");
+        }
         if (!State::getInstance().connected) {
             throw Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
         }
@@ -220,9 +260,9 @@ namespace Linda {
             for (auto &path : node_paths) {
                 //todo recalculate timeout with each iteration -> probably needed for file locks
                 std::string node_path = state.tupleSpacePath + "/" + path + ".linda";
-                Tuple t = find(pattern, node_path, true, timeout);
+                Tuple t = find(pattern, node_path, true);
                 if (t.size() > 0) {
-                    //tuple found, remove from kłełełes and return
+                    //tuple found, remove from all kłełełes and return
                     dequeue(enqeued_in);
                     return t;
                 }
@@ -242,6 +282,9 @@ namespace Linda {
     //to jest nieusuwające
     Tuple read(Pattern pattern, std::chrono::milliseconds timeout) {
         std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
+        if(pattern.getSerializedLength() > MAX_TUPLE_SIZE){
+            throw Exception::TupleSpaceException("Exceeding max length after serialization");
+        }
         if (!State::getInstance().connected) {
             throw Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
         }
@@ -251,9 +294,8 @@ namespace Linda {
         try {
             const std::vector<std::string> &node_paths = pattern.all_paths();
             for (auto &path : node_paths) {
-                //todo recalculate timeout with each iteration -> probably needed for file locks
                 std::string node_path = state.tupleSpacePath + "/" + path + ".linda";
-                Tuple t = find(pattern, node_path, false, timeout);
+                Tuple t = find(pattern, node_path, false);
                 if (t.size() > 0) {
                     //tuple found, remove from kłełełes and return
                     dequeue(enqeued_in);
@@ -268,7 +310,8 @@ namespace Linda {
             dequeue(enqeued_in);
             throw ex;   //todo nie wiem czy to na pewno tak jak się powinno to robić
         }
-        //todo sleep waiting for a signal
+        //todo sleep waiting for a signal -> remember to first recalculate timeout!
+        //todo do stuff after receiving signal
         return Tuple();
     }
 }
