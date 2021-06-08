@@ -78,7 +78,7 @@ namespace Linda {
 
             buffer[0] = type;
             memcpy(buffer + 1, &pid, sizeof(pid));
-            for (unsigned long i = 0; i < sizeof (serialized_pattern); i++) {
+            for (unsigned long i = 0; i < serialized_pattern.size(); i++) {
                 buffer[i + LIST_HEADER_SIZE] = serialized_pattern[i];
             }
             buffer[LIST_HEADER_SIZE + MAX_TUPLE_SIZE] = '\n'; //for readability
@@ -121,11 +121,126 @@ namespace Linda {
         }
 
         void dequeue(const std::vector<std::string> &queue_paths) {
-            //todo implement
+            pid_t pid = getpid();
+            char buffer[LIST_HEADER_SIZE];
+            memset(buffer, 0, LIST_HEADER_SIZE);
+
+            //locking whole file
+            struct flock lock{};
+
+            for(auto file_path : queue_paths){
+                int fd = open(file_path.c_str(), O_CREAT | O_RDWR, 0666);
+                if (fd < 0) {
+                    std::string errno_msg = strerror(errno);
+                    throw Exception::TupleSpaceException("Error when opening queue file. " + errno_msg);
+                }
+
+                memset(&lock, 0, sizeof(lock));
+                lock.l_type = F_WRLCK | F_RDLCK;
+                lock.l_whence = SEEK_SET;
+                if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                    close(fd);
+                    std::string errno_msg = strerror(errno);
+                    throw Exception::TupleSpaceException("Could not acquire queue file lock. " + errno_msg);
+                }
+
+                while(::read(fd, buffer, LIST_HEADER_SIZE) == LIST_HEADER_SIZE){
+                    pid_t temp;
+                    memcpy(&temp, buffer+1, sizeof(temp));
+                    if(buffer[0] != EMPTY_FLAG && temp == pid){
+                        lseek(fd, - static_cast<long>(LIST_HEADER_SIZE), SEEK_CUR);
+                        char empty = EMPTY_FLAG;
+                        if(write(fd, &empty, sizeof (char)) < 0){
+                            lock.l_type = F_UNLCK;
+                            if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                                close(fd);
+                                std::string errno_msg = strerror(errno);
+                                throw Exception::TupleSpaceException("Could not acquire queue file lock. " + errno_msg);
+                            }
+                            close(fd);
+                            std::string errno_msg = strerror(errno);
+                            throw Exception::TupleSpaceException("Error writing to file. " + errno_msg);
+                        }
+                        close(fd);
+                        return; //there is only one process entry possible - we don't do no threads
+                    }
+                }
+                //unlock and move onto the next one
+                lock.l_type = F_UNLCK;
+                if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                    close(fd);
+                    std::string errno_msg = strerror(errno);
+                    throw Exception::TupleSpaceException("Could not acquire queue file lock. " + errno_msg);
+                }
+                close(fd);
+            }
         }
 
-        void search_queue(Tuple tuple){
-            //todo implement
+        void search_queue(Tuple tuple, const std::string& path){
+            int fd = open(path.c_str(), O_RDWR | O_CREAT, 0666);
+            if(fd <0){
+                throw Exception::TupleSpaceException("Could not open queue file.");
+            }
+
+            //lock whole file
+            struct flock lock{};
+            memset(&lock, 0, sizeof(lock));
+            lock.l_type = F_WRLCK | F_RDLCK;
+            lock.l_whence = SEEK_SET;
+
+            unsigned char buffer[MAX_TUPLE_SIZE + LIST_HEADER_SIZE];
+            if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                close(fd);
+                std::string errno_msg = strerror(errno);
+                throw Exception::TupleSpaceException("Could not acquire queue file lock. " + errno_msg);
+            }
+
+            while(::read(fd, buffer, MAX_TUPLE_SIZE + LIST_HEADER_SIZE) > 0){
+                char type = buffer[0];
+                if(type == 'R' || type == 'I'){
+                    pid_t pid;
+                    memcpy(&pid, buffer+1, sizeof (pid_t));
+
+                    std::vector<ISerializable::serialization_type> tuple_vec;
+                    unsigned long i = LIST_HEADER_SIZE;
+                    auto c = buffer[i];
+                    while (c != Pattern::SerializationCodes::END&& i < ENTRY_SIZE - 1) {
+                        c = buffer[i];
+                        tuple_vec.push_back(c);
+                        i++;
+                    }
+                    Pattern p;
+                    p.deserialize(tuple_vec);
+                    if(p.check(tuple)){
+                        lseek(fd, -static_cast<long>(MAX_TUPLE_SIZE + LIST_HEADER_SIZE), SEEK_CUR);
+                        unsigned char flag = EMPTY_FLAG;
+                        if(write(fd, &flag, sizeof(flag)) < 0){
+                            lock.l_type = F_UNLCK;
+                            if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                                close(fd);
+                                std::string errno_msg = strerror(errno);
+                                throw Exception::TupleSpaceException("Error releasing file lock. " + errno_msg);
+                            }
+                            std::string errno_msg = strerror(errno);
+                            close(fd);
+                            throw Exception::TupleSpaceException("Error while browsing through the process queue. " + errno_msg);
+                        }
+                        std::cout<<"Notify process "<<(int)pid<<std::endl;
+                        //todo send signal here
+                        if(type == 'I'){
+                            break;
+                        }
+                    }
+                }
+
+            }
+            lock.l_type = F_UNLCK;
+            if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                close(fd);
+                std::string errno_msg = strerror(errno);
+                throw Exception::TupleSpaceException("Could not release queue file lock. " + errno_msg);
+            }
+            close(fd);
         }
 
     }
@@ -166,6 +281,9 @@ namespace Linda {
     }
 
     void output(Tuple tuple) {
+        if(tuple.size() == 0){
+            throw Exception::TupleSpaceException("Empty tuple");
+        }
         if(tuple.getSerializedLength() > MAX_TUPLE_SIZE){
             throw Exception::TupleSpaceException("Exceeding max length after serialization");
         }
@@ -240,7 +358,8 @@ namespace Linda {
         }
         close(fd);
 
-        search_queue(tuple);
+        std::string queue_path = state.tupleSpacePath + "/" + tuple.path() + "-queue.linda";
+        search_queue(tuple, queue_path);
     }
 
     //to jest usuwające
@@ -248,6 +367,9 @@ namespace Linda {
         std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
         if(pattern.getSerializedLength() > MAX_TUPLE_SIZE){
             throw Exception::TupleSpaceException("Exceeding max length after serialization");
+        }
+        if(pattern.size() == 0){
+            throw Exception::TupleSpaceException("Empty pattern");
         }
         if (!State::getInstance().connected) {
             throw Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
@@ -284,6 +406,9 @@ namespace Linda {
         std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
         if(pattern.getSerializedLength() > MAX_TUPLE_SIZE){
             throw Exception::TupleSpaceException("Exceeding max length after serialization");
+        }
+        if(pattern.size() == 0){
+            throw Exception::TupleSpaceException("Empty pattern");
         }
         if (!State::getInstance().connected) {
             throw Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
