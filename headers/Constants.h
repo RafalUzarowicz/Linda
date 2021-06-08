@@ -12,6 +12,9 @@ namespace Linda{
     const static int MAX_DEPTH_VALUE = 7;
     const static char EMPTY_FLAG = 'E';
     const static char BUSY_FLAG = 'B';
+    const static char INPUT_FLAG = 'I';
+    const static char READ_FLAG = 'R';
+    const static char LIST_HEADER_SIZE = sizeof(pid_t) + 1;
     const static std::string DEFAULT_TUPLESPACE_NAME = "tuplespace";
     const static std::string DEFAULT_TUPLESPACE_DIR = "./";
     const static std::string DEFAULT_TUPLESPACE_PATH = DEFAULT_TUPLESPACE_DIR + DEFAULT_TUPLESPACE_NAME;

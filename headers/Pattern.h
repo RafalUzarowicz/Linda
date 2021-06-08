@@ -53,6 +53,20 @@ namespace Linda{
 
     class Pattern : public ISerializable {
     public:
+        enum SerializationCodes{
+            START = 0x80,
+            END,
+            INT,
+            FLOAT,
+            STRING,
+            EQUAL,
+            LESS,
+            LESS_OR_EQUAL,
+            GREATER,
+            GREATER_OR_EQUAL,
+            ANY
+        };
+
         using PatternsVector = std::vector<PatternEntry>;
 
         Pattern() = default;
@@ -96,19 +110,6 @@ namespace Linda{
         void deserialize(const std::vector<serialization_type> &vector) override;
 
     private:
-        enum SerializationCodes{
-            START = START_SERIALIZATION_CODE,
-            END,
-            INT,
-            FLOAT,
-            STRING,
-            EQUAL,
-            LESS,
-            LESS_OR_EQUAL,
-            GREATER,
-            GREATER_OR_EQUAL,
-            ANY
-        };
         static SerializationCodes typeToSerializationCode(PatternEntryType);
         static PatternEntryType serializationCodeToType(SerializationCodes);
 
