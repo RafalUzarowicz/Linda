@@ -23,9 +23,10 @@ namespace Linda{
     void create(bool = true, const std::string& = DEFAULT_TUPLESPACE_DIR, const std::string& = DEFAULT_TUPLESPACE_NAME);
     void connect(const std::string& = DEFAULT_TUPLESPACE_PATH);
     void output(Tuple);
-    Tuple input(Pattern, std::chrono::milliseconds = DEFAULT_INPUT_TIMEOUT);
-    Tuple read(Pattern, std::chrono::milliseconds = DEFAULT_READ_TIMEOUT);
+    Tuple input(Pattern, std::chrono::microseconds = DEFAULT_INPUT_TIMEOUT);
+    Tuple read(Pattern, std::chrono::microseconds = DEFAULT_READ_TIMEOUT);
     void sighandler(int signum, siginfo_t *info, void *ptr);
+    Tuple wait_for_it(const Pattern& pattern, char type, std::chrono::microseconds timeout);
 }
 
 #endif //LINDA_TUPLESPACE_H

@@ -6,28 +6,28 @@ int main(){
     std::cout<<(int)getpid()<<std::endl;
     Linda::create();
     Linda::connect();
-//    Linda::Tuple t;
-//    t.push(12);
-//    t.push("pattern1-0");
-//    t.push(10.0f);
-//    Linda::output(t);
-//
-//    Linda::Tuple t1;
-//    t1.push(9);
-//    t1.push("pattern12");
-//    t1.push(10.0f);
-//    Linda::output(t1);
+    Linda::Tuple t;
+    t.push(12);
+    t.push("pattern1-0");
+    t.push(10.0f);
+    Linda::output(t);
 
-//    Linda::Pattern right;
-//    right.add<Linda::PatternEntryType::Equal>(9);
-//    right.add<Linda::PatternEntryType::Equal>("pattern12");
-//    right.add<Linda::PatternEntryType::LessOrEqual>(18.0f);
+    Linda::Tuple t1;
+    t1.push(9);
+    t1.push("pattern12");
+    t1.push(10.0f);
+    Linda::output(t1);
 
-//    Linda::Pattern wrong;
-//    wrong.add<Linda::PatternEntryType::Equal>(9);
-//    wrong.add<Linda::PatternEntryType::Equal>("pattern12");
-//    wrong.add<Linda::PatternEntryType::LessOrEqual>(30.0f);
-//    wrong.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::String);
+    Linda::Pattern right;
+    right.add<Linda::PatternEntryType::Equal>(9);
+    right.add<Linda::PatternEntryType::Equal>("pattern12");
+    right.add<Linda::PatternEntryType::LessOrEqual>(18.0f);
+
+    Linda::Pattern wrong;
+    wrong.add<Linda::PatternEntryType::Equal>(9);
+    wrong.add<Linda::PatternEntryType::Equal>("pattern12");
+    wrong.add<Linda::PatternEntryType::LessOrEqual>(30.0f);
+    wrong.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::String);
 
     Linda::Pattern wrong2;
     wrong2.add<Linda::PatternEntryType::Equal>(10);

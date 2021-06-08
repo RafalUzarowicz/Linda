@@ -1,4 +1,3 @@
-#include <iostream>
 #include <string>
 #include <csignal>
 #include "Signals.h"
@@ -6,7 +5,7 @@
 #define LAST(k,n) ((k) & ((1<<(n))-1))
 #define MID(k,m,n) LAST((k)>>(m),((n)-(m)))
 
-void Linda::Signal::sendAvailableSignal(pid_t pid, int depth, int index) {
+void Linda::Signal::notify(pid_t pid, int depth, int index) {
     union sigval sigvalMsg = {};
     sigvalMsg.sival_int = encode(depth, index);
     sigqueue(pid, SIGTUPLE, sigvalMsg);

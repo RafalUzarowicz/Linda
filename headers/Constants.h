@@ -14,14 +14,15 @@ namespace Linda{
     const static char BUSY_FLAG = 'B';
     const static char INPUT_FLAG = 'I';
     const static char READ_FLAG = 'R';
-    const static char LIST_HEADER_SIZE = sizeof(pid_t) + 1;
+    const static unsigned long LIST_HEADER_SIZE = sizeof(pid_t) + 1;
+    const static unsigned long LIST_ENTRY_SIZE = ENTRY_SIZE + sizeof (pid_t);
     const static std::string DEFAULT_TUPLESPACE_NAME = "tuplespace";
     const static std::string DEFAULT_TUPLESPACE_DIR = "./";
     const static std::string DEFAULT_TUPLESPACE_PATH = DEFAULT_TUPLESPACE_DIR + DEFAULT_TUPLESPACE_NAME;
     // Timeouts
-    const static std::chrono::milliseconds DEFAULT_TIMEOUT = std::chrono::milliseconds(10000);
-    const static std::chrono::milliseconds DEFAULT_READ_TIMEOUT = DEFAULT_TIMEOUT;
-    const static std::chrono::milliseconds DEFAULT_INPUT_TIMEOUT = DEFAULT_TIMEOUT;
+    const static std::chrono::microseconds DEFAULT_TIMEOUT = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds(2));
+    const static std::chrono::microseconds DEFAULT_READ_TIMEOUT = DEFAULT_TIMEOUT;
+    const static std::chrono::microseconds DEFAULT_INPUT_TIMEOUT = DEFAULT_TIMEOUT;
     // Serialization
     const static ISerializable::serialization_type START_SERIALIZATION_CODE = 0x80;
     const static size_t INITAL_TUPLE_SERIALIZATION_SIZE = 2;
