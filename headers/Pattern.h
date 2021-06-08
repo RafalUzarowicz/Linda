@@ -97,7 +97,7 @@ namespace Linda{
 
     private:
         enum SerializationCodes{
-            START = 0x80,
+            START = START_SERIALIZATION_CODE,
             END,
             INT,
             FLOAT,

@@ -56,13 +56,13 @@ namespace Linda{
         TupleValue value;
     };
 
-    static size_t INT_SIZE = sizeof(TupleEntry::int_type) / sizeof(ISerializable::serialization_type);
-    static size_t FLOAT_SIZE = sizeof(TupleEntry::float_type) / sizeof(ISerializable::serialization_type);
+    static const size_t INT_SIZE = sizeof(TupleEntry::int_type) / sizeof(ISerializable::serialization_type);
+    static const size_t FLOAT_SIZE = sizeof(TupleEntry::float_type) / sizeof(ISerializable::serialization_type);
 
     class Tuple : public ISerializable {
     public:
         enum SerializationCodes{
-            START = 0x80,
+            START = START_SERIALIZATION_CODE,
             END,
             INT,
             FLOAT,

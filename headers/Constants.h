@@ -15,9 +15,18 @@ namespace Linda{
     const static std::string DEFAULT_TUPLESPACE_NAME = "tuplespace";
     const static std::string DEFAULT_TUPLESPACE_DIR = "./";
     const static std::string DEFAULT_TUPLESPACE_PATH = DEFAULT_TUPLESPACE_DIR + DEFAULT_TUPLESPACE_NAME;
+    // Timeouts
     const static std::chrono::milliseconds DEFAULT_TIMEOUT = std::chrono::milliseconds(10000);
     const static std::chrono::milliseconds DEFAULT_READ_TIMEOUT = DEFAULT_TIMEOUT;
     const static std::chrono::milliseconds DEFAULT_INPUT_TIMEOUT = DEFAULT_TIMEOUT;
+    // Serialization
+    const static ISerializable::serialization_type START_SERIALIZATION_CODE = 0x80;
+    const static size_t INITAL_TUPLE_SERIALIZATION_SIZE = 2;
+    const static size_t INITAL_PATTERN_SERIALIZATION_SIZE = 2;
+    const static size_t SERIALIZATION_WRAP_CODES_NUMBER = 2;
+    const static size_t PATTERN_TYPE_SERIALIZATION_SIZE = 1;
+    const static size_t PATTERN_ENTRY_CODES_SERIALIZATION_SIZE = SERIALIZATION_WRAP_CODES_NUMBER + PATTERN_TYPE_SERIALIZATION_SIZE;
+    const static size_t TUPLE_ENTRY_CODES_SERIALIZATION_SIZE = SERIALIZATION_WRAP_CODES_NUMBER;
 }
 
 #endif //LINDA_CONSTANTS_H

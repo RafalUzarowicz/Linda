@@ -50,37 +50,37 @@ Linda::Tuple::Tuple(const std::vector<ISerializable::serialization_type>& vec) {
 Linda::Tuple& Linda::Tuple::push(TupleEntry::int_type value){
     entries.emplace_back(value);
     treePath << 'i';
-    serializedLength += 2 + INT_SIZE;
+    serializedLength += TUPLE_ENTRY_CODES_SERIALIZATION_SIZE + INT_SIZE;
     return *this;
 }
 
 Linda::Tuple& Linda::Tuple::push(TupleEntry::float_type value){
     entries.emplace_back(value);
     treePath << 'f';
-    serializedLength += 2 + FLOAT_SIZE;
+    serializedLength += TUPLE_ENTRY_CODES_SERIALIZATION_SIZE + FLOAT_SIZE;
     return *this;
 }
 
 Linda::Tuple& Linda::Tuple::push(TupleEntry::string_type value){
     entries.emplace_back(value);
     treePath << 's';
-    serializedLength += 2 + value.size();
+    serializedLength += TUPLE_ENTRY_CODES_SERIALIZATION_SIZE + value.size();
     return *this;
 }
 
 std::string Linda::Tuple::to_string() const{
-    std::stringstream stringstream;
-    stringstream << "(";
+    std::stringstream ss;
+    ss << "(";
     for( size_t i = 0, e = entries.size(); i<e; ++i ){
-        stringstream << entries[i];
+        ss << entries[i];
         if(i<e-1){
-            stringstream<<", ";
+            ss << ", ";
         }else{
             break;
         }
     }
-    stringstream << ")";
-    return stringstream.str();
+    ss << ")";
+    return ss.str();
 }
 
 std::vector<ISerializable::serialization_type> Linda::Tuple::serialize() {
@@ -184,7 +184,7 @@ void Linda::Tuple::deserialize(const std::vector<serialization_type>& vector) {
 
 void Linda::Tuple::reset() {
     treePath.clear();
-    serializedLength = 2;
+    serializedLength = INITAL_TUPLE_SERIALIZATION_SIZE;
     entries.clear();
 }
 
