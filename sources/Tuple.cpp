@@ -71,7 +71,7 @@ Linda::Tuple& Linda::Tuple::push(TupleEntry::string_type value){
 std::string Linda::Tuple::to_string() const{
     std::stringstream stringstream;
     stringstream << "(";
-    for( size_t i = 0, e = entries.size();; ++i ){
+    for( size_t i = 0, e = entries.size(); i<e; ++i ){
         stringstream << entries[i];
         if(i<e-1){
             stringstream<<", ";

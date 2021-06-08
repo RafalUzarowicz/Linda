@@ -95,7 +95,7 @@ Linda::Pattern::Pattern(const std::vector<ISerializable::serialization_type>& ve
 std::string Linda::Pattern::to_string() const {
     std::stringstream ss;
     ss << "(";
-    for(size_t i = 0, e = entries.size();; ++i ){
+    for(size_t i = 0, e = entries.size(); i<e; ++i){
         ss << entries[i].to_string();
         if(i<e-1){
             ss << ", ";

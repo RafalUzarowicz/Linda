@@ -18,6 +18,9 @@ void glupieTesty(){
 
 void testyRafalaXd(){
 
+    std::cout<<Linda::Tuple()<<'\n';
+    std::cout<<Linda::Pattern()<<'\n';
+
     Linda::Tuple t(Linda::Tuple().push(2).push(3.0f).push("Tak"));
 
     for(auto& val : t){
