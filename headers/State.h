@@ -29,10 +29,10 @@ namespace Linda{
         friend void create(bool, const std::string&, const std::string&);
         friend void connect(const std::string&);
         friend void output(Tuple);
-        friend Tuple input(Pattern, std::chrono::milliseconds);
-        friend Tuple read(Pattern pattern, std::chrono::milliseconds timeout);
-        friend void sighandler(int signum, siginfo_t *info, void *ptr);
-        friend Tuple wait_for_it(const Pattern& pattern, char type);
+        friend Tuple input(Pattern, std::chrono::microseconds);
+        friend Tuple read(Pattern pattern, std::chrono::microseconds timeout);
+        friend void sighandler(int , siginfo_t *, void *);
+        friend Tuple wait_for_it(const Pattern& , char , std::chrono::microseconds);
     };
 }
 
