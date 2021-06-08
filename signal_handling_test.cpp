@@ -16,11 +16,12 @@ int main() {
         act.sa_sigaction = Linda::sighandler;
         act.sa_flags = SA_SIGINFO;
         sigaction(Linda::SIGTUPLE, &act, nullptr);
+
         pause();
     } else {
         sleep(5);
         std::cout << "Sending signal" << std::endl;
-        Linda::Signal::sendAvailableSignal(pid, 7, 4);
+        Linda::Signal::notify(pid, 7, 4);
     }
 
     return 0;

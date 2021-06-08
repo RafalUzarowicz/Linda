@@ -1,6 +1,7 @@
 #include "TupleSpace.h"
 
 void Linda::sighandler(int signum, siginfo_t *info, void *ptr) {
+    std::cout<<"im here"<<std::endl;
     int encodedValue = info->si_int, depth, index;
     Linda::Signal::decode(encodedValue, depth, index);
 
@@ -184,7 +185,7 @@ namespace Linda {
             }
         }
 
-        void search_queue(Tuple tuple, const std::string& path){
+        void search_queue(const Tuple& tuple, const std::string& path, int depth, int idx){
             int fd = open(path.c_str(), O_RDWR | O_CREAT, 0666);
             if(fd <0){
                 throw Exception::TupleSpaceException("Could not open queue file.");
@@ -204,7 +205,7 @@ namespace Linda {
             }
 
             while(::read(fd, buffer, MAX_TUPLE_SIZE + LIST_HEADER_SIZE) > 0){
-                char type = buffer[0];
+                unsigned char type = buffer[0];
                 if(type == 'R' || type == 'I'){
                     pid_t pid;
                     memcpy(&pid, buffer+1, sizeof (pid_t));
@@ -233,11 +234,13 @@ namespace Linda {
                             close(fd);
                             throw Exception::TupleSpaceException("Error while browsing through the process queue. " + errno_msg);
                         }
-                        std::cout<<"Notify process "<<(int)pid<<std::endl;
-                        //todo send signal here
+                        std::cout<<getpid()<<": Notify process "<<(int)pid<<std::endl;
+                        Signal::notify(pid, depth, idx);
                         if(type == 'I'){
                             break;
                         }
+                    }else{
+                        std::cout<<getpid()<<": Won't notify "<<(int)pid<<std::endl;
                     }
                 }
 
@@ -250,6 +253,104 @@ namespace Linda {
                 throw Exception::TupleSpaceException("Could not release queue file lock. " + errno_msg);
             }
             close(fd);
+        }
+
+        Tuple get(const Pattern& pattern, const std::string& tuple_dir, int depth, int idx, bool remove){
+            auto all_paths = pattern.all_paths();
+            std::cout<<"Depth: "<<depth<<", idx: "<<idx<<std::endl;
+            std::string path;
+            for(auto& p : all_paths){
+                std::cout<<"path: "<<p<<std::endl;
+                if(p.size() == (unsigned long) depth){
+                    path = p;
+                    break;
+                }
+            }
+            std::string filepath = tuple_dir + "/" + path + ".linda";
+            std::cout<<"Looking through: "<<filepath<<std::endl;
+            int fd = open(filepath.c_str(), O_RDWR);
+            if(fd < 0){
+                std::string error_msg = strerror(errno);
+                throw Exception::TupleSpaceException("Could not open tuple file. " + error_msg);
+            }
+            lseek(fd,static_cast<long>(ENTRY_SIZE * idx), SEEK_SET);
+
+            unsigned char buffer[ENTRY_SIZE];
+            memset(buffer, 0, ENTRY_SIZE);
+
+            struct flock lock{};
+            memset(&lock, 0, sizeof(lock));
+            lock.l_type = F_WRLCK | F_RDLCK;
+            lock.l_whence = SEEK_CUR;
+            lock.l_len = LIST_ENTRY_SIZE;
+
+            if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                close(fd);
+                std::string errno_msg = strerror(errno);
+                throw Exception::TupleSpaceException("Could not acquire queue file lock. " + errno_msg);
+            }
+
+            //read tuple
+            if(::read(fd, buffer, ENTRY_SIZE) == ENTRY_SIZE){
+                if(buffer[0] == BUSY_FLAG){
+                    std::vector<ISerializable::serialization_type> tuple_vec;
+                    unsigned long i = 1;
+                    auto c = buffer[i];
+                    while (c != Tuple::SerializationCodes::END && i < ENTRY_SIZE - 1) {
+                        c = buffer[i];
+                        tuple_vec.push_back(c);
+                        i++;
+                    }
+                    Tuple t;
+                    t.deserialize(tuple_vec);
+                    std::cout<<"Found tuple: "<<t<<std::endl;
+                    if(pattern.check(t)){
+                        if(remove){
+                            lseek(fd, -static_cast<long>(ENTRY_SIZE), SEEK_CUR);
+                            if(write(fd, &EMPTY_FLAG, sizeof (EMPTY_FLAG)) < 0){
+                                lock.l_type = F_UNLCK;
+                                if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                                    close(fd);
+                                    throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+                                }
+                                close(fd);
+                                throw Linda::Exception::TupleSpaceException("Could not write to tuple file");
+                            }
+                        }
+
+                        lock.l_type = F_UNLCK;
+                        if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                            close(fd);
+                            throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+                        }
+                        close(fd);
+                        return t;
+                    }
+                }
+            }else{
+                lock.l_type = F_UNLCK;
+                if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                    close(fd);
+                    throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+                }
+                close(fd);
+                std::string errno_msg = strerror(errno);
+                throw Linda::Exception::TupleSpaceException("Error while reading from file. " + errno_msg);
+            }
+            lock.l_type = F_UNLCK;
+            if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                close(fd);
+                throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+            }
+            close(fd);
+            return Tuple();
+        }
+
+        void register_handler(){
+            struct sigaction act = {};
+            act.sa_sigaction = sighandler;
+            act.sa_flags = SA_SIGINFO;
+            sigaction(Linda::SIGTUPLE, &act, nullptr);
         }
 
     }
@@ -330,6 +431,7 @@ namespace Linda {
         }
 
         //todo add max file size check
+        int idx = 0;
         ssize_t bytes_read;
         bytes_read = ::read(fd, read_buffer, Linda::ENTRY_SIZE);
         while (bytes_read == Linda::ENTRY_SIZE) {
@@ -337,6 +439,7 @@ namespace Linda {
                 lseek(fd, - static_cast<long>(ENTRY_SIZE), SEEK_CUR);
                 break;
             }
+            idx ++;
             bytes_read = ::read(fd, read_buffer, Linda::ENTRY_SIZE);
         }
 
@@ -368,11 +471,12 @@ namespace Linda {
         close(fd);
 
         std::string queue_path = state.tupleSpacePath + "/" + tuple.path() + "-queue.linda";
-        search_queue(tuple, queue_path);
+        search_queue(tuple, queue_path, tuple.size(), idx);
     }
 
     //to jest usuwające
     Tuple input(Pattern pattern, std::chrono::milliseconds timeout) {
+        register_handler();
         std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
         if(pattern.getSerializedLength() > MAX_TUPLE_SIZE){
             throw Exception::TupleSpaceException("Exceeding max length after serialization");
@@ -389,7 +493,6 @@ namespace Linda {
         try {
             const std::vector<std::string> &node_paths = pattern.all_paths();
             for (auto &path : node_paths) {
-                //todo recalculate timeout with each iteration -> probably needed for file locks
                 std::string node_path = state.tupleSpacePath + "/" + path + ".linda";
                 Tuple t = find(pattern, node_path, true);
                 if (t.size() > 0) {
@@ -406,12 +509,15 @@ namespace Linda {
             dequeue(enqeued_in);
             throw ex;   //todo nie wiem czy to na pewno tak jak się powinno to robić
         }
-        //todo sleep waiting for a signal
-        return Tuple();
+
+        //todo - use provided timeout
+
+        return wait_for_it( pattern,Linda::INPUT_FLAG);
     }
 
     //to jest nieusuwające
     Tuple read(Pattern pattern, std::chrono::milliseconds timeout) {
+        register_handler();
         std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
         if(pattern.getSerializedLength() > MAX_TUPLE_SIZE){
             throw Exception::TupleSpaceException("Exceeding max length after serialization");
@@ -444,8 +550,58 @@ namespace Linda {
             dequeue(enqeued_in);
             throw ex;   //todo nie wiem czy to na pewno tak jak się powinno to robić
         }
-        //todo sleep waiting for a signal -> remember to first recalculate timeout!
-        //todo do stuff after receiving signal
+        return wait_for_it( pattern,Linda::READ_FLAG);
+    }
+
+    Tuple wait_for_it(const Pattern& pattern, char type){
+        //fixme debug
+        std::cout<<getpid()<<": wait for it!"<<std::endl;
+        State& state = State::getInstance();
+        while (true){
+            struct timespec timeval{};
+            timeval.tv_sec = 10;
+            timeval.tv_nsec = 0;
+
+            sigset_t sigset;
+            sigemptyset(&sigset);
+            sigaddset(&sigset, SIGTUPLE);
+
+            siginfo_t siginfo{};
+            memset(&siginfo, 0, sizeof (siginfo_t));
+
+            //int num = sigtimedwait(&sigset, &siginfo, &timeval);
+            int num = SIGTUPLE;
+            std::cout<<"Sleeping"<<std::endl;
+            sleep(5);
+            sigprocmask(SIG_BLOCK, &sigset, nullptr);
+            //block signals
+            if(num == SIGTUPLE){
+                if(state.depth == 0){
+                    std::cout<<"Sigtimedwait returned but depth=0"<<std::endl;
+                    sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
+                    break;
+                }
+                std::cout<<getpid()<<"Woken up!"<<std::endl;
+                bool rm_flag = type == READ_FLAG ? false : true;
+                Tuple t = get(pattern, state.tupleSpacePath, state.depth, state.index, rm_flag);
+                if(t.size() > 0){
+                    sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
+                    return t;
+                }
+                auto paths = pattern.all_paths();
+                std::string path;
+                for(auto& p : paths){
+                    if(p.size() == state.depth){
+                        path = p;
+                    }
+                }
+                enqueue(pattern, state.tupleSpacePath + "/" + path + "-queue.linda", type);
+                sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
+            }else{
+                sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
+                break;
+            }
+        }
         return Tuple();
     }
 }

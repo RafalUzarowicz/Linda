@@ -32,6 +32,7 @@ namespace Linda{
         friend Tuple input(Pattern, std::chrono::milliseconds);
         friend Tuple read(Pattern pattern, std::chrono::milliseconds timeout);
         friend void sighandler(int signum, siginfo_t *info, void *ptr);
+        friend Tuple wait_for_it(const Pattern& pattern, char type);
     };
 }
 
