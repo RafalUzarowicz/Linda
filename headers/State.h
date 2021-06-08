@@ -22,11 +22,11 @@ namespace Linda{
 
         bool connected;
 
-        friend void create(const std::string&, const std::string&);
+        friend void create(bool, const std::string&, const std::string&);
         friend void connect(const std::string&);
         friend void output(Tuple);
         friend Tuple input(Pattern, std::chrono::milliseconds);
-        friend Tuple readTuple(Pattern pattern, std::chrono::milliseconds timeout);
+        friend Tuple read(Pattern pattern, std::chrono::milliseconds timeout);
     };
 }
 

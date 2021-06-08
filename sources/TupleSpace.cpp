@@ -1,188 +1,149 @@
 #include "TupleSpace.h"
+namespace Linda{
+    namespace{
+        Tuple find (const Pattern& pattern, const std::string & file_path, bool remove, std::chrono::milliseconds timeout){
+            //todo implement removing while browsing
+            //todo implement timeout
+            int fd = open(file_path.c_str(), O_CREAT | O_RDWR, 0666);
+            if(fd < 0){
+                std::string errno_msg = strerror(errno);
+                throw Exception::TupleSpaceException("Could not open tuple file. " + errno_msg);
+            }
 
-void Linda::create(bool no_exist_err, const std::string& path, const std::string& name) {
-    const std::filesystem::path tuplespace_path{path + "/" + name};
-
-    if(std::filesystem::exists(tuplespace_path) ){
-        if(no_exist_err){
-            return;
+            char read_buffer[ENTRY_SIZE];
+            memset(&read_buffer, 0, sizeof(read_buffer));
+            //todo set lock
+            while(::read(fd, read_buffer, sizeof (ENTRY_SIZE)) > 0){
+                //todo release lock
+                if(read_buffer[0] == Linda::BUSY_FLAG){
+                    std::vector<ISerializable::serialization_type> tuple_vec;
+                    unsigned long i = 1;
+                    auto c = static_cast<unsigned char> (read_buffer[i]);
+                    while(c!=Tuple::SerializationCodes::END && i < ENTRY_SIZE-1){
+                        c = static_cast<unsigned char>(read_buffer[i]);
+                        tuple_vec.push_back(c);
+                        i++;
+                    }
+                    Tuple t;
+                    t.deserialize(tuple_vec);
+                    if(pattern.check(t)){
+                        close(fd);
+                        return t;
+                    }
+                }
+            }
+            return Tuple();
         }
-        throw Linda::Exception::TupleSpaceCreateException("\"" + name + "\" already exists in " + path);
-    }else{
-        try{
-            std::filesystem::create_directories(tuplespace_path);
-        }catch (std::filesystem::filesystem_error & ex){
-            std::string msg = "Filesystem error. ";
-            msg.append(ex.what());
-            throw Linda::Exception::TupleSpaceCreateException(msg);
+
+        void enqueue(Pattern pattern, const std::string & file_path, const char& type){
+            pid_t pid = getpid();
+            auto serialized_pattern = pattern.serialize();
+            unsigned char buffer[MAX_TUPLE_SIZE + LIST_HEADER_SIZE + 1];
+
+            buffer[0] = type;
+            memcpy(buffer + 1, &pid, sizeof (pid));
+            for(unsigned long i = 0; i < MAX_TUPLE_SIZE - LIST_HEADER_SIZE; i++){
+                buffer[i+ LIST_HEADER_SIZE] = serialized_pattern[i];
+            }
+            buffer[LIST_HEADER_SIZE + MAX_TUPLE_SIZE] = '\n'; //for readability
+
+            int queue_fd = open(file_path.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
+            if(queue_fd < 0){
+                std::string errno_msg = strerror(errno);
+                throw Exception::TupleSpaceException("Error when opening queue file. " + errno_msg);
+            }
+
+            //lock whole file
+            struct flock lock{};
+            memset(&lock, 0, sizeof (lock));
+            lock.l_type = F_WRLCK | F_RDLCK;
+            lock.l_whence = SEEK_SET;
+
+            if(fcntl(queue_fd, F_SETLKW, &lock) == -1){
+                close(queue_fd);
+                std::string errno_msg = strerror(errno);
+                throw Exception::TupleSpaceException("Could not acquire queue file lock. " + errno_msg);
+            }
+
+            if(write(queue_fd, buffer, MAX_TUPLE_SIZE + LIST_HEADER_SIZE + 1) < 0){
+                lock.l_type = F_UNLCK;
+                if(fcntl(queue_fd, F_SETLKW, &lock) == -1){
+                    close(queue_fd);
+                    std::string errno_msg = strerror(errno);
+                    throw Exception::TupleSpaceException("Error releasing file lock. " + errno_msg);
+                }
+                std::string errno_msg = strerror(errno);
+                throw Exception::TupleSpaceException("Error writing process to queue. " + errno_msg);
+            }
+            //release lock after writing
+            lock.l_type = F_UNLCK;
+            if(fcntl(queue_fd, F_SETLKW, &lock) == -1){
+                close(queue_fd);
+                throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+            }
+            close(queue_fd);
+        }
+
+        void dequeue(const std::vector<std::string> & queue_paths){
+            //todo implement
         }
     }
-    std::ofstream file(tuplespace_path.string() + "/.tuplespace");
-    file.close();
-}
+    void create(bool no_exist_err, const std::string& path, const std::string& name) {
+        const std::filesystem::path tuplespace_path{path + "/" + name};
 
-void Linda::connect(const std::string& path) {
-    if(std::filesystem::exists(path)){
-        if(std::filesystem::exists(path + "/.tuplespace")){
-            State & state = State::getInstance();
-            state.tupleSpacePath = path;
-            state.connected = true;
+        if(std::filesystem::exists(tuplespace_path) ){
+            if(no_exist_err){
+                return;
+            }
+            throw Exception::TupleSpaceCreateException("\"" + name + "\" already exists in " + path);
         }else{
-            throw Linda::Exception::TupleSpaceConnectException(" \"" + path + "\" not a tuplespace.");
+            try{
+                std::filesystem::create_directories(tuplespace_path);
+            }catch (std::filesystem::filesystem_error & ex){
+                std::string msg = "Filesystem error. ";
+                msg.append(ex.what());
+                throw Exception::TupleSpaceCreateException(msg);
+            }
         }
-    }else{
-        throw Linda::Exception::TupleSpaceConnectException(" \"" + path + "\" does not exist.");
-    }
-}
-
-void Linda::output(Linda::Tuple tuple) {
-    if(!State::getInstance().connected){
-        throw Linda::Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
-    }
-    State& state = State::getInstance();
-
-    //find file
-    //fixme can this cause process to hang?
-    std::string filePath = state.tupleSpacePath + "/" + tuple.path() + ".linda";
-    int flags = O_CREAT | O_RDWR;
-    int fd = open(filePath.c_str(), flags, 0666);
-    if(fd < 0){
-        std::cerr<<strerror(errno)<<std::endl;
-        throw Linda::Exception::TupleSpaceException("Could not open tuple file");
-    }
-    //prep readTuple buffer
-    unsigned char read_buffer[Linda::ENTRY_SIZE];
-    memset(&read_buffer, 0, sizeof (read_buffer));
-
-    //lock file
-    struct flock lock;
-    memset(&lock, 0, sizeof (lock));
-    lock.l_type = F_WRLCK | F_RDLCK;
-    lock.l_whence = SEEK_SET;
-    lock.l_start = 0;
-    lock.l_len = 0; //lock whole file
-
-    if(fcntl(fd, F_SETLKW, &lock) == -1){
-        close(fd);
-        std::cerr<<strerror(errno)<<std::endl;
-        throw Linda::Exception::TupleSpaceException("Could not acquire file lock");
+        std::ofstream file(tuplespace_path.string() + "/.tuplespace");
+        file.close();
     }
 
-    //todo add max file size check
-    ssize_t bytes_read;
-    bytes_read = read(fd, read_buffer, Linda::ENTRY_SIZE);
-    while(bytes_read == Linda::ENTRY_SIZE){
-        if((read_buffer[0] & EMPTY_FLAG )== EMPTY_FLAG){
-            break;
+    void connect(const std::string& path) {
+        if(std::filesystem::exists(path)){
+            if(std::filesystem::exists(path + "/.tuplespace")){
+                State & state = State::getInstance();
+                state.tupleSpacePath = path;
+                state.connected = true;
+            }else{
+                throw Exception::TupleSpaceConnectException(" \"" + path + "\" not a tuplespace.");
+            }
+        }else{
+            throw Exception::TupleSpaceConnectException(" \"" + path + "\" does not exist.");
         }
-        bytes_read = read(fd, read_buffer, Linda::ENTRY_SIZE);
     }
 
-    //todo move padding to tuple class logic
-    auto serialized = tuple.serialize();
-    //todo guard against too long tuples
-    unsigned char entry[Linda::ENTRY_SIZE];
-    memset(entry, int('-'), sizeof(entry));
-    entry[0] = Linda::BUSY_FLAG;
-    for (unsigned long i = 0; i< serialized.size(); i++){
-        entry[i+1] = serialized[i];
-    }
-    entry[Linda::ENTRY_SIZE -1] = '\n';
-
-    if(write(fd, entry, Linda::ENTRY_SIZE) == -1){
-        lock.l_type = F_UNLCK;
-        if(fcntl(fd, F_SETLKW, &lock) == -1){
-            close(fd);
-            std::cerr<<strerror(errno)<<std::endl;
-            throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+    void output(Tuple tuple) {
+        if(!State::getInstance().connected){
+            throw Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
         }
-        std::cerr<<strerror(errno)<<std::endl;
-        throw Linda::Exception::TupleSpaceException("Couldn't write tuple to file");
-    }
+        State& state = State::getInstance();
 
-    //unlock
-    lock.l_type = F_UNLCK;
-    if(fcntl(fd, F_SETLKW, &lock) == -1){
-        close(fd);
-        throw Linda::Exception::TupleSpaceException("Error releasing file lock");
-    }
-    close(fd);
-
-
-    //todo find waiting processes and send signals
-}
-
-Linda::Tuple Linda::input(Linda::Pattern pattern, std::chrono::milliseconds timeout) {
-    std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
-    if(!State::getInstance().connected){
-        throw Linda::Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
-    }
-
-
-
-    return Linda::Tuple();
-}
-
-// TODO: change it to read
-//don't change back to read cause it clashes with unistd.h read
-Linda::Tuple Linda::readTuple(Linda::Pattern pattern, std::chrono::milliseconds timeout) {
-    std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
-    if(!State::getInstance().connected){
-        throw Linda::Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
-    }
-    State& state = State::getInstance();
-    // TODO: implement - read and delete
-    const std::vector<std::string > & filePaths = pattern.all_paths();
-    for(auto & path : filePaths){
-        std::string filePath = state.tupleSpacePath + "/" + path + ".linda";
+        //find file
+        //fixme can this cause process to hang?
+        std::string filePath = state.tupleSpacePath + "/" + tuple.path() + ".linda";
         int flags = O_CREAT | O_RDWR;
         int fd = open(filePath.c_str(), flags, 0666);
         if(fd < 0){
             std::cerr<<strerror(errno)<<std::endl;
-            throw Linda::Exception::TupleSpaceException("Could not open tuple file");
+            throw Exception::TupleSpaceException("Could not open tuple file");
         }
 
-        //todo add file locking -> at least a read lock started and then released with each read iteration
-        char read_buffer[Linda::ENTRY_SIZE];
+        //prep read buffer
+        unsigned char read_buffer[Linda::ENTRY_SIZE];
         memset(&read_buffer, 0, sizeof (read_buffer));
-        while(read(fd, read_buffer, Linda::ENTRY_SIZE) > 0){
-            if(read_buffer[0] == Linda::BUSY_FLAG){
-                std::vector<ISerializable::serialization_type> tuple_vec;
-                int i = 1;
-                //fixme handle unsigned chars -> can't really read them from file or do proper substring comparison
-                unsigned char c = static_cast<unsigned char>(read_buffer[i]);
-                while( c != Tuple::SerializationCodes::END && i < ENTRY_SIZE-1){
-                    c = static_cast<unsigned char>(read_buffer[i]);
-                    tuple_vec.push_back(c);
-                    i++;
-                }
-                Linda::Tuple t;
-                t.deserialize(tuple_vec);
-                if(pattern.check(t)){
-                    //todo release locks here (when they get implemented)
-                    close(fd);
-                    return t;
-                }
-            }
-        }
 
-        //queue process
-        pid_t this_pid = getpid();
-        std::cout<<sizeof (pid_t)<<std::endl;
-        auto serialized_pattern = pattern.serialize();
-        auto pattern_entry_size = serialized_pattern.size() + 1;
-        auto* buffer = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * (pattern_entry_size) + sizeof (pid_t)));
-        buffer[0] = (unsigned char) this_pid;
-
-        memcpy(buffer, &this_pid, sizeof (pid_t));
-        for(unsigned long i = 0; i < pattern_entry_size; i++){
-            buffer[i+1] = serialized_pattern[i];
-        }
-        buffer[pattern_entry_size-1 + sizeof (pid_t)] = '\n';
-
-        std::string queue = state.tupleSpacePath + "/" + path + "-queue.linda";
-        int queue_fd = open(queue.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
-
+        //lock file
         struct flock lock;
         memset(&lock, 0, sizeof (lock));
         lock.l_type = F_WRLCK | F_RDLCK;
@@ -190,36 +151,122 @@ Linda::Tuple Linda::readTuple(Linda::Pattern pattern, std::chrono::milliseconds 
         lock.l_start = 0;
         lock.l_len = 0; //lock whole file
 
-        if(queue_fd < 0){
-            free(buffer);
-            std::cout<<strerror(errno)<<std::endl;
-            throw Linda::Exception::TupleSpaceException("Exception while opening queue file.");
-        }
         if(fcntl(fd, F_SETLKW, &lock) == -1){
             close(fd);
             std::cerr<<strerror(errno)<<std::endl;
-            throw Linda::Exception::TupleSpaceException("Could not acquire queue file lock");
+            throw Exception::TupleSpaceException("Could not acquire file lock");
         }
-        if(write(queue_fd, buffer, pattern_entry_size)< 0){
-            free(buffer);
+
+        //todo add max file size check
+        ssize_t bytes_read;
+        bytes_read = ::read(fd, read_buffer, Linda::ENTRY_SIZE);
+        while(bytes_read == Linda::ENTRY_SIZE){
+            if((read_buffer[0] & EMPTY_FLAG )== EMPTY_FLAG){
+                break;
+            }
+            bytes_read = ::read(fd, read_buffer, Linda::ENTRY_SIZE);
+        }
+
+        auto serialized = tuple.serialize();
+        //todo guard against too long tuples
+        unsigned char entry[Linda::ENTRY_SIZE];
+        memset(entry, int('-'), sizeof(entry));
+        entry[0] = Linda::BUSY_FLAG;
+        for (unsigned long i = 0; i< serialized.size(); i++){
+            entry[i+1] = serialized[i];
+        }
+        entry[Linda::ENTRY_SIZE -1] = '\n';
+
+        if(write(fd, entry, Linda::ENTRY_SIZE) == -1){
             lock.l_type = F_UNLCK;
             if(fcntl(fd, F_SETLKW, &lock) == -1){
                 close(fd);
-                throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+                std::cerr<<strerror(errno)<<std::endl;
+                throw Exception::TupleSpaceException("Error releasing file lock");
             }
-            std::cout<<strerror(errno)<<std::endl;
-            throw Linda::Exception::TupleSpaceException("Exception while queuing the process.");
+            std::cerr<<strerror(errno)<<std::endl;
+            throw Exception::TupleSpaceException("Couldn't write tuple to file");
         }
+
+        //unlock
         lock.l_type = F_UNLCK;
         if(fcntl(fd, F_SETLKW, &lock) == -1){
             close(fd);
-            throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+            throw Exception::TupleSpaceException("Error releasing file lock");
         }
-        close(queue_fd);
-        free(buffer);
+        close(fd);
+
+
+        //todo find waiting processes and send signals
     }
 
-    //todo sleep waiting for a signal
+    //to jest usuwające
+    Tuple input(Pattern pattern, std::chrono::milliseconds timeout) {
+        std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
+        if(!State::getInstance().connected){
+            throw Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
+        }
+        State& state = State::getInstance();
 
-    return Linda::Tuple();
+        std::vector<std::string> enqeued_in;
+        try{
+            const std::vector<std::string > & node_paths = pattern.all_paths();
+            for(auto & path : node_paths){
+                //todo recalculate timeout with each iteration -> probably needed for file locks
+                std::string node_path = state.tupleSpacePath + "/" + path + ".linda";
+                Tuple t = find(pattern, node_path, true, timeout);
+                if(t.size() > 0){
+                    //tuple found, remove from kłełełes and return
+                    dequeue(enqeued_in);
+                    return t;
+                }
+                std::string queue_path = state.tupleSpacePath + "/" + path + "-queue.linda";;
+                enqueue(pattern, queue_path, Linda::INPUT_FLAG);
+                enqeued_in.push_back(queue_path);
+            }
+        }catch (const Exception::TupleSpaceException& ex){
+            //todo remove process from kłełełes and re-throw exception?
+            dequeue(enqeued_in);
+            throw ex;   //todo nie wiem czy to na pewno tak jak się powinno to robić
+        }
+        //todo sleep waiting for a signal
+        return Tuple();
+
+
+
+        return Tuple();
+    }
+
+    //to jest nieusuwające
+    Tuple read(Pattern pattern, std::chrono::milliseconds timeout) {
+        std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
+        if(!State::getInstance().connected){
+            throw Exception::TupleSpaceConnectException("Not connected to any tuplespace.");
+        }
+        State& state = State::getInstance();
+
+        std::vector<std::string> enqeued_in;
+        try{
+            const std::vector<std::string > & node_paths = pattern.all_paths();
+            for(auto & path : node_paths){
+                //todo recalculate timeout with each iteration -> probably needed for file locks
+                std::string node_path = state.tupleSpacePath + "/" + path + ".linda";
+                Tuple t = find(pattern, node_path, false, timeout);
+                if(t.size() > 0){
+                    //tuple found, remove from kłełełes and return
+                    dequeue(enqeued_in);
+                    return t;
+                }
+                std::string queue_path = state.tupleSpacePath + "/" + path + "-queue.linda";;
+                enqueue(pattern, queue_path, Linda::READ_FLAG);
+                enqeued_in.push_back(queue_path);
+            }
+        }catch (const Exception::TupleSpaceException& ex){
+            //todo remove process from kłełełes and re-throw exception?
+            dequeue(enqeued_in);
+            throw ex;   //todo nie wiem czy to na pewno tak jak się powinno to robić
+        }
+        //todo sleep waiting for a signal
+        return Tuple();
+    }
 }

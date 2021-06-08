@@ -24,7 +24,7 @@ namespace Linda{
     void connect(const std::string& = DEFAULT_TUPLESPACE_PATH);
     void output(Tuple);
     Tuple input(Pattern, std::chrono::milliseconds = DEFAULT_INPUT_TIMEOUT);
-    Tuple readTuple(Pattern, std::chrono::milliseconds = DEFAULT_READ_TIMEOUT);
+    Tuple read(Pattern, std::chrono::milliseconds = DEFAULT_READ_TIMEOUT);
 }
 
 #endif //LINDA_TUPLESPACE_H

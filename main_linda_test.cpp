@@ -28,7 +28,7 @@ int main(){
     wrong.add<Linda::PatternEntryType::LessOrEqual>(3.0f);
 
 
-    Linda::Tuple t13 = Linda::readTuple(wrong);
-    std::cout<< Linda::readTuple(right) << std::endl;
+    Linda::Tuple t13 = Linda::read(wrong);
+    std::cout<< Linda::read(right) << std::endl;
     return 0;
 }
