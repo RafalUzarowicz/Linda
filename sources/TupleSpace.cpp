@@ -3,7 +3,6 @@
 namespace Linda {
     namespace {
         Tuple find(const Pattern &pattern, const std::string &file_path, bool remove) {
-            //todo implement timeout
             int fd = open(file_path.c_str(), O_CREAT | O_RDWR, 0666);
             if (fd < 0) {
                 std::string errno_msg = strerror(errno);
@@ -70,7 +69,6 @@ namespace Linda {
         }
 
         void enqueue(Pattern pattern, const std::string &file_path, const char &type) {
-            //todo should find first empty spot instead of appending
             pid_t pid = getpid();
             auto serialized_pattern = pattern.serialize();
             unsigned char buffer[MAX_TUPLE_SIZE + LIST_HEADER_SIZE + 1];
@@ -234,6 +232,7 @@ namespace Linda {
                 }
 
             }
+            //todo "skurcz" kolejkę - tj poprzesuwaj wszystkie elementy tak, żeby nie było dziur
             lock.l_type = F_UNLCK;
             if (fcntl(fd, F_SETLKW, &lock) == -1) {
                 close(fd);
