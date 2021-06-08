@@ -1,7 +1,3 @@
-//
-// Created by asia on 05.06.2021.
-//
-
 #ifndef LINDA_SIGNALS_H
 #define LINDA_SIGNALS_H
 

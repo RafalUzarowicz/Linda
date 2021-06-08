@@ -134,7 +134,6 @@ Linda::Tuple Linda::input(Linda::Pattern pattern, std::chrono::milliseconds time
 }
 
 // TODO: change it to read
-//don't change back to read cause it clashes with unistd.h read
 Linda::Tuple Linda::readTuple(Linda::Pattern pattern, std::chrono::milliseconds timeout) {
     std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
     if(!State::getInstance().connected){
