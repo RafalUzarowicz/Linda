@@ -13,8 +13,8 @@
 #include "Constants.h"
 #include "Exceptions.h"
 
-namespace Linda{
-    enum class PatternEntryType{
+namespace Linda {
+    enum class PatternEntryType {
         Equal,
         Less,
         LessOrEqual,
@@ -23,19 +23,23 @@ namespace Linda{
         Any
     };
 
-    class PatternEntry{
+    class PatternEntry {
     public:
         using PatternValue = std::pair<PatternEntryType, TupleEntry::TupleValue>;
 
-        PatternEntry(PatternEntryType type, const TupleEntry::TupleValue& value) : pattern(std::make_pair(type, value)){}
-        explicit PatternEntry(PatternValue patternValue) : pattern(std::move(patternValue)){}
+        PatternEntry(PatternEntryType type, const TupleEntry::TupleValue& value) : pattern(
+                std::make_pair(type, value)) {}
+
+        explicit PatternEntry(PatternValue patternValue) : pattern(std::move(patternValue)) {}
+
         ~PatternEntry() = default;
+
         PatternEntry(const PatternEntry&);
 
         [[nodiscard]] const PatternValue& getPattern() const;
 
         [[nodiscard]] const Linda::TupleEntry::TupleValue& getValue() const {
-            if(pattern.first == PatternEntryType::Any){
+            if (pattern.first == PatternEntryType::Any) {
                 throw Linda::Exception::Pattern::AnyException("PatternEntryType::Any doesn't have any value!");
             }
             return pattern.second;
@@ -53,7 +57,7 @@ namespace Linda{
 
     class Pattern : public ISerializable {
     public:
-        enum SerializationCodes{
+        enum SerializationCodes {
             START = 0x80,
             END,
             INT,
@@ -70,8 +74,11 @@ namespace Linda{
         using PatternsVector = std::vector<PatternEntry>;
 
         Pattern() = default;
+
         ~Pattern() = default;
+
         Pattern(const Pattern&);
+
         explicit Pattern(const std::vector<ISerializable::serialization_type>&);
 
         template<PatternEntryType TYPE>
@@ -81,36 +88,48 @@ namespace Linda{
         void add(TupleEntry::float_type);
 
         template<PatternEntryType TYPE>
-        void add(const TupleEntry::string_type &);
+        void add(const TupleEntry::string_type&);
 
         template<PatternEntryType TYPE>
         void add(TupleEntryType);
 
         void add(PatternEntryType type, TupleEntry::int_type i);
+
         void add(PatternEntryType type, TupleEntry::float_type f);
+
         void add(PatternEntryType type, TupleEntry::string_type s);
+
         void add(PatternEntryType pType, Linda::TupleEntryType tType);
 
         bool check(const Tuple&) const;
 
         const PatternsVector& getPatterns() const { return entries; }
+
         std::string path() const { return treePath.str(); }
+
         std::string to_string() const;
+
         std::vector<std::string> all_paths() const;
 
-        void clear(){ entries.clear(); treePath.clear(); }
+        void clear();
 
-        PatternEntry& operator[](std::size_t index){ return entries[index]; }
+        PatternEntry& operator[](std::size_t index) { return entries[index]; }
+
         const PatternEntry& operator[](std::size_t index) const { return entries[index]; }
+
         size_t size() const { return entries.size(); }
+
         auto begin() { return entries.begin(); }
+
         auto end() { return entries.end(); }
 
         std::vector<serialization_type> serialize() override;
-        void deserialize(const std::vector<serialization_type> &vector) override;
+
+        void deserialize(const std::vector<serialization_type>& vector) override;
 
     private:
         static SerializationCodes typeToSerializationCode(PatternEntryType);
+
         static PatternEntryType serializationCodeToType(SerializationCodes);
 
         void reset();
@@ -136,7 +155,9 @@ void Linda::Pattern::add(const TupleEntry::string_type& str) {
 }
 
 std::ostream& operator<<(std::ostream&, const Linda::PatternEntryType&);
+
 std::ostream& operator<<(std::ostream&, const Linda::PatternEntry&);
+
 std::ostream& operator<<(std::ostream&, const Linda::Pattern&);
 
 #endif //LINDA_PATTERN_H

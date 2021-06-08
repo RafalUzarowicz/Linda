@@ -11,5 +11,9 @@
 // - max tuple length limit
 // - limit tuples number in one file and proces entries too
 
-int main(){
+#include "TupleSpace.h"
+
+
+int main() {
+
 }

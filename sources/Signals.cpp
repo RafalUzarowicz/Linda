@@ -2,8 +2,8 @@
 #include <csignal>
 #include "Signals.h"
 
-#define LAST(k,n) ((k) & ((1<<(n))-1))
-#define MID(k,m,n) LAST((k)>>(m),((n)-(m)))
+#define LAST(k, n) ((k) & ((1<<(n))-1))
+#define MID(k, m, n) LAST((k)>>(m),((n)-(m)))
 
 void Linda::Signal::notify(pid_t pid, int depth, int index) {
     union sigval sigvalMsg = {};
@@ -11,8 +11,8 @@ void Linda::Signal::notify(pid_t pid, int depth, int index) {
     sigqueue(pid, SIGTUPLE, sigvalMsg);
 }
 
-int Linda::Signal::encode(int depth, int index){
-    if(depth > MAX_DEPTH_VALUE) {
+int Linda::Signal::encode(int depth, int index) {
+    if (depth > MAX_DEPTH_VALUE) {
         throw Linda::Exception::Signal::EncodingError("Too big depth value: " + std::to_string(depth));
     }
 

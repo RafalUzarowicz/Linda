@@ -13,20 +13,23 @@
 #include "Tuple.h"
 #include "Pattern.h"
 #include "Constants.h"
-#include "State.h"
 #include "Exceptions.h"
 #include "Signals.h"
 
-namespace Linda{
+namespace Linda {
+
     //todo should there be a destroy function? what should it do to all the waiting processes?
     // how about just removing tuplespace? other processes will get error trying to read files. There might be some problems with locked files removal
-    void create(bool = true, const std::string& = DEFAULT_TUPLESPACE_DIR, const std::string& = DEFAULT_TUPLESPACE_NAME);
+    void
+    create(bool = true, const std::string& = DEFAULT_TUPLESPACE_DIR, const std::string& = DEFAULT_TUPLESPACE_NAME);
+
     void connect(const std::string& = DEFAULT_TUPLESPACE_PATH);
+
     void output(Tuple);
+
     Tuple input(Pattern, std::chrono::microseconds = DEFAULT_INPUT_TIMEOUT);
+
     Tuple read(Pattern, std::chrono::microseconds = DEFAULT_READ_TIMEOUT);
-    void sighandler(int signum, siginfo_t *info, void *ptr);
-    Tuple wait_for_it(const Pattern& pattern, char type, std::chrono::microseconds timeout);
 }
 
 #endif //LINDA_TUPLESPACE_H

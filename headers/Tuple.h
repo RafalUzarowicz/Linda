@@ -13,8 +13,11 @@
 #include "Constants.h"
 #include "Exceptions.h"
 
-namespace Linda{
-    template<class... Ts> struct operators : Ts... { using Ts::operator()...; };
+namespace Linda {
+    template<class... Ts>
+    struct operators : Ts ... {
+        using Ts::operator()...;
+    };
     template<class... Ts> operators(Ts...) -> operators<Ts...>;
 
     enum class TupleEntryType : size_t {
@@ -24,14 +27,14 @@ namespace Linda{
         String
     };
 
-    class TupleEntry{
+    class TupleEntry {
     public:
         using int_type = int32_t;
         using float_type = float;
         using string_type = std::string;
         using TupleValue = std::variant<int_type, float_type, string_type>;
 
-        explicit TupleEntry(TupleValue value = 0) : value(std::move(value)){}
+        explicit TupleEntry(TupleValue value = 0) : value(std::move(value)) {}
 
         [[nodiscard]] const TupleValue& getValue() const {
             return value;
@@ -61,16 +64,20 @@ namespace Linda{
 
     class Tuple : public ISerializable {
     public:
-        enum SerializationCodes{
+        enum SerializationCodes {
             START = START_SERIALIZATION_CODE,
             END,
             INT,
             FLOAT,
             STRING
         };
+
         Tuple();
+
         ~Tuple() = default;
+
         Tuple(const Tuple&);
+
         explicit Tuple(const std::vector<ISerializable::serialization_type>&);
 
         using EntriesVector = std::vector<TupleEntry>;
@@ -82,21 +89,29 @@ namespace Linda{
         Linda::Tuple& push(TupleEntry::string_type);
 
         const EntriesVector& getEntries() const { return entries; }
+
         std::string path() const { return treePath.str(); }
+
         std::string to_string() const;
 
-        void clear(){ entries.clear(); treePath.clear(); }
+        void clear();
 
-        TupleEntry& operator[](std::size_t index){ return entries[index]; }
+        TupleEntry& operator[](std::size_t index) { return entries[index]; }
+
         const TupleEntry& operator[](std::size_t index) const { return entries[index]; }
+
         size_t size() const { return entries.size(); }
+
         auto begin() { return entries.begin(); }
+
         auto end() { return entries.end(); }
 
         std::vector<serialization_type> serialize() override;
+
         void deserialize(const std::vector<serialization_type>& vector) override;
 
         void reset();
+
     private:
         EntriesVector entries;
 
@@ -105,7 +120,9 @@ namespace Linda{
 }
 
 std::ostream& operator<<(std::ostream&, const Linda::TupleEntryType&);
+
 std::ostream& operator<<(std::ostream&, const Linda::TupleEntry&);
+
 std::ostream& operator<<(std::ostream&, const Linda::Tuple&);
 
 #endif //LINDA_TUPLE_H

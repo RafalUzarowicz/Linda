@@ -4,7 +4,7 @@
 #include <chrono>
 #include <csignal>
 
-namespace Linda{
+namespace Linda {
     const static int SIGTUPLE = SIGUSR1;
     const static int32_t MAX_STRING_LENGTH = 64;
     const static unsigned long MAX_TUPLE_SIZE = 255;
@@ -15,12 +15,13 @@ namespace Linda{
     const static char INPUT_FLAG = 'I';
     const static char READ_FLAG = 'R';
     const static unsigned long LIST_HEADER_SIZE = sizeof(pid_t) + 1;
-    const static unsigned long LIST_ENTRY_SIZE = ENTRY_SIZE + sizeof (pid_t);
+    const static unsigned long LIST_ENTRY_SIZE = ENTRY_SIZE + sizeof(pid_t);
     const static std::string DEFAULT_TUPLESPACE_NAME = "tuplespace";
     const static std::string DEFAULT_TUPLESPACE_DIR = "./";
     const static std::string DEFAULT_TUPLESPACE_PATH = DEFAULT_TUPLESPACE_DIR + DEFAULT_TUPLESPACE_NAME;
     // Timeouts
-    const static std::chrono::microseconds DEFAULT_TIMEOUT = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds(2));
+    const static std::chrono::microseconds DEFAULT_TIMEOUT = std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::seconds(2));
     const static std::chrono::microseconds DEFAULT_READ_TIMEOUT = DEFAULT_TIMEOUT;
     const static std::chrono::microseconds DEFAULT_INPUT_TIMEOUT = DEFAULT_TIMEOUT;
     // Serialization
@@ -29,7 +30,8 @@ namespace Linda{
     const static size_t INITAL_PATTERN_SERIALIZATION_SIZE = 2;
     const static size_t SERIALIZATION_WRAP_CODES_NUMBER = 2;
     const static size_t PATTERN_TYPE_SERIALIZATION_SIZE = 1;
-    const static size_t PATTERN_ENTRY_CODES_SERIALIZATION_SIZE = SERIALIZATION_WRAP_CODES_NUMBER + PATTERN_TYPE_SERIALIZATION_SIZE;
+    const static size_t PATTERN_ENTRY_CODES_SERIALIZATION_SIZE =
+            SERIALIZATION_WRAP_CODES_NUMBER + PATTERN_TYPE_SERIALIZATION_SIZE;
     const static size_t TUPLE_ENTRY_CODES_SERIALIZATION_SIZE = SERIALIZATION_WRAP_CODES_NUMBER;
 }
 
