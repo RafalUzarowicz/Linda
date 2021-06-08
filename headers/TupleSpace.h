@@ -10,11 +10,9 @@
 #include <fstream>
 #include <cerrno>
 
+#include "Constants.h"
 #include "Tuple.h"
 #include "Pattern.h"
-#include "Constants.h"
-#include "Exceptions.h"
-#include "Signals.h"
 
 namespace Linda {
 

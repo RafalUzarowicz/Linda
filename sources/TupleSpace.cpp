@@ -1,5 +1,8 @@
 #include "TupleSpace.h"
 
+#include "Exceptions.h"
+#include "Signals.h"
+
 static Linda::Tuple waitForIt(const Linda::Pattern&, char, std::chrono::microseconds);
 
 static void signalHandler(int, siginfo_t*, void*);
