@@ -5,7 +5,7 @@ namespace Linda::Exception{
     class TupleSpaceException : public std::runtime_error{
     public:
         explicit TupleSpaceException(const std::string& msg)
-                : runtime_error(msg) {}
+                : std::runtime_error(msg) {}
 
     };
 
@@ -22,6 +22,7 @@ namespace Linda::Exception{
                 : TupleSpaceException("Could not connect to tuplespace." + msg) {}
 
     };
+
     namespace Tuple{
         class BaseException : public std::runtime_error{
         public:
@@ -63,6 +64,18 @@ namespace Linda::Exception{
         class FloatException : public BaseException{
         public:
             explicit FloatException(const std::string& msg) : BaseException(msg){}
+        };
+    }
+
+    namespace Signal{
+        class BaseException : public std::runtime_error{
+        public:
+            explicit BaseException(const std::string& msg) : std::runtime_error(msg){}
+        };
+
+        class EncodingError : public BaseException{
+        public:
+            explicit EncodingError(const std::string& msg) : BaseException(msg){}
         };
     }
 }

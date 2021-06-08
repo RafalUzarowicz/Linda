@@ -1,5 +1,15 @@
 #include "TupleSpace.h"
 
+void Linda::sighandler(int signum, siginfo_t *info, void *ptr) {
+    int encodedValue = info->si_int, depth, index;
+    Linda::Signal::decode(encodedValue, depth, index);
+
+    State& state = State::getInstance();
+    state.depth = depth;
+    state.index = index;
+    std::cout << "Received depth: " << depth << ", index: " << index << std::endl;
+}
+
 void Linda::create(bool no_exist_err, const std::string& path, const std::string& name) {
     const std::filesystem::path tuplespace_path{path + "/" + name};
 

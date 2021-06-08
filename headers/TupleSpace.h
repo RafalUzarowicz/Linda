@@ -25,6 +25,7 @@ namespace Linda{
     void output(Tuple);
     Tuple input(Pattern, std::chrono::milliseconds = DEFAULT_INPUT_TIMEOUT);
     Tuple readTuple(Pattern, std::chrono::milliseconds = DEFAULT_READ_TIMEOUT);
+    void sighandler(int signum, siginfo_t *info, void *ptr);
 }
 
 #endif //LINDA_TUPLESPACE_H

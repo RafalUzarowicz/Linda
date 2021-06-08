@@ -11,6 +11,8 @@ namespace Linda{
     private:
         State() : tupleSpacePath(DEFAULT_TUPLESPACE_DIR + "/" + DEFAULT_TUPLESPACE_NAME) {
             connected = false;
+            depth = 0;
+            index = 0;
         }
         static State & getInstance(){
             static State instance;
@@ -21,12 +23,15 @@ namespace Linda{
         std::string tupleSpacePath{};
 
         bool connected;
+        int depth;
+        int index;
 
         friend void create(const std::string&, const std::string&);
         friend void connect(const std::string&);
         friend void output(Tuple);
         friend Tuple input(Pattern, std::chrono::milliseconds);
         friend Tuple readTuple(Pattern pattern, std::chrono::milliseconds timeout);
+        friend void sighandler(int signum, siginfo_t *info, void *ptr);
     };
 }
 

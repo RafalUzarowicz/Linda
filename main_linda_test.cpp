@@ -30,5 +30,11 @@ int main(){
 
     Linda::Tuple t13 = Linda::readTuple(wrong);
     std::cout<< Linda::readTuple(right) << std::endl;
+
+    int depth = 7, index = 4;
+    int newEncodedValue = Linda::Signal::encode(depth, index);
+    printf("%d", newEncodedValue);
+    Linda::Signal::decode(newEncodedValue, depth, index);
+    std::cout << "\n" << depth << " " << index << std::endl;
     return 0;
 }

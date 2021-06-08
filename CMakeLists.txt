@@ -29,6 +29,9 @@ target_sources(RAFAL PRIVATE tuple_pattern_test.cpp ${SOURCES})
 add_executable(LINDA_TEST)
 target_sources(LINDA_TEST PRIVATE main_linda_test.cpp ${SOURCES})
 
+add_executable(SIGNAL_TEST)
+target_sources(SIGNAL_TEST PRIVATE signal_handling_test.cpp ${SOURCES})
+
 add_executable(GOOGLE_TEST)
 target_sources(GOOGLE_TEST PRIVATE tests/test1.cpp ${SOURCES})
 target_link_libraries(GOOGLE_TEST gtest_main)
