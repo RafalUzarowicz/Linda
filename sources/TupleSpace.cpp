@@ -240,6 +240,17 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
         throw Linda::Exception::TupleSpaceException("Could not acquire queue file lock. " + errno_msg);
     }
 
+    if(std::filesystem::file_size(path) == 0) {
+        lock.l_type = F_UNLCK;
+        if (fcntl(fd, F_SETLKW, &lock) == -1) {
+            close(fd);
+            throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+        }
+        close(fd);
+        return;
+    }
+
+    lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_END);
     while (::read(fd, buffer, Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE) > 0) {
         unsigned char type = buffer[0];
         if (type == Linda::READ_FLAG || type == Linda::INPUT_FLAG) {
@@ -277,7 +288,11 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
                 }
             }
         }
-
+        off_t currentPos = lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_CUR);
+        if(currentPos == 0) {
+            break;
+        }
+        lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_CUR);
     }
     lock.l_type = F_UNLCK;
     if (fcntl(fd, F_SETLKW, &lock) == -1) {
@@ -416,7 +431,7 @@ static Linda::Tuple waitForIt(const Linda::Pattern& pattern, char type, std::chr
                 sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
                 break;
             }
-            bool rm_flag = type == Linda::READ_FLAG ? false : true;
+            bool rm_flag = type != Linda::READ_FLAG;
             Linda::Tuple t = get(pattern, state.tupleSpacePath, state.depth, state.index, rm_flag);
             if (t.size() > 0) {
                 sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
@@ -513,7 +528,15 @@ namespace Linda {
             throw Linda::Exception::TupleSpaceException("Could not acquire file lock");
         }
 
-        //todo add max file size check
+        if(std::filesystem::file_size(filePath) == MAX_TUPLE_FILE_SIZE) {
+            lock.l_type = F_UNLCK;
+            if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                close(fd);
+                throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+            }
+            close(fd);
+            throw Linda::Exception::TupleSpaceException("Maximum size of tuple file has been reached");
+        }
         int idx = 0;
         ssize_t bytes_read;
         bytes_read = ::read(fd, read_buffer, Linda::ENTRY_SIZE);
