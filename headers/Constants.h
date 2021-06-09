@@ -18,7 +18,7 @@ namespace Linda {
     const static char READ_FLAG = 'R';
     const static unsigned long LIST_HEADER_SIZE = sizeof(pid_t) + 1;
     const static unsigned long LIST_ENTRY_SIZE = ENTRY_SIZE + sizeof(pid_t);
-    const static int MAX_NUM_OF_RECORDS = 32;
+    const static unsigned long MAX_NUM_OF_RECORDS = 16384;
     const static unsigned long MAX_TUPLE_FILE_SIZE = MAX_NUM_OF_RECORDS * ENTRY_SIZE;
     const static std::string DEFAULT_TUPLESPACE_NAME = "tuplespace";
     const static std::string DEFAULT_TUPLESPACE_DIR = "./";

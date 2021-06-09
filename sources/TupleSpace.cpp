@@ -240,6 +240,17 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
         throw Linda::Exception::TupleSpaceException("Could not acquire queue file lock. " + errno_msg);
     }
 
+    if(std::filesystem::file_size(path) == 0) {
+        lock.l_type = F_UNLCK;
+        if (fcntl(fd, F_SETLKW, &lock) == -1) {
+            close(fd);
+            throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+        }
+        close(fd);
+        return;
+    }
+
+    lseek(fd, -(long)(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_END);
     while (::read(fd, buffer, Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE) > 0) {
         unsigned char type = buffer[0];
         if (type == Linda::READ_FLAG || type == Linda::INPUT_FLAG) {
@@ -277,7 +288,11 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
                 }
             }
         }
-
+        off_t currentPos = lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_END);
+        if(currentPos == 0) {
+            break;
+        }
+        lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_END);
     }
     lock.l_type = F_UNLCK;
     if (fcntl(fd, F_SETLKW, &lock) == -1) {
