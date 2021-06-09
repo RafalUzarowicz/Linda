@@ -513,7 +513,15 @@ namespace Linda {
             throw Linda::Exception::TupleSpaceException("Could not acquire file lock");
         }
 
-        //todo add max file size check
+        if(std::filesystem::file_size(filePath) == MAX_TUPLE_FILE_SIZE) {
+            lock.l_type = F_UNLCK;
+            if (fcntl(fd, F_SETLKW, &lock) == -1) {
+                close(fd);
+                throw Linda::Exception::TupleSpaceException("Error releasing file lock");
+            }
+            close(fd);
+            throw Linda::Exception::TupleSpaceException("Maximum size of tuple file has been reached");
+        }
         int idx = 0;
         ssize_t bytes_read;
         bytes_read = ::read(fd, read_buffer, Linda::ENTRY_SIZE);
