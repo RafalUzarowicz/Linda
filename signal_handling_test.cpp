@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <csignal>
+#include "Signals.h"
 #include "Linda.h"
 
 int main() {
@@ -12,12 +13,10 @@ int main() {
         std::cout << "Could not create child process" << std::endl;
         exit(1);
     } else if(pid == 0) {
-        struct sigaction act = {};
-        act.sa_sigaction = Linda::sighandler;
-        act.sa_flags = SA_SIGINFO;
-        sigaction(Linda::SIGTUPLE, &act, nullptr);
-
+        registerHandler();
         pause();
+
+        std::cout << "Received signal" << std::endl;
     } else {
         sleep(5);
         std::cout << "Sending signal" << std::endl;

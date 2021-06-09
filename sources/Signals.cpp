@@ -13,7 +13,7 @@ void Linda::Signal::notify(pid_t pid, int depth, int index) {
 
 int Linda::Signal::encode(int depth, int index) {
     if (depth > MAX_DEPTH_VALUE) {
-        throw Linda::Exception::Signal::EncodingError("Too big depth value: " + std::to_string(depth));
+        throw Linda::Exception::Signal::EncodingException("Too big depth value: " + std::to_string(depth));
     }
 
     int encodedValue = 0;

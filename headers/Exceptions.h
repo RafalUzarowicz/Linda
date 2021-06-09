@@ -73,9 +73,9 @@ namespace Linda::Exception {
             explicit BaseException(const std::string& msg) : std::runtime_error(msg) {}
         };
 
-        class EncodingError : public BaseException {
+        class EncodingException : public BaseException {
         public:
-            explicit EncodingError(const std::string& msg) : BaseException(msg) {}
+            explicit EncodingException(const std::string& msg) : BaseException(msg) {}
         };
     }
 }

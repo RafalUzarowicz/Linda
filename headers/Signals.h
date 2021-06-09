@@ -3,7 +3,7 @@
 
 #include <bits/types/siginfo_t.h>
 #include <stdexcept>
-#include <signal.h>
+#include <csignal>
 
 #include "Tuple.h"
 #include "Exceptions.h"

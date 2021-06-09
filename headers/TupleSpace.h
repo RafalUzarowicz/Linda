@@ -14,6 +14,8 @@
 #include "Tuple.h"
 #include "Pattern.h"
 
+void registerHandler();
+
 namespace Linda {
 
     //todo should there be a destroy function? what should it do to all the waiting processes?

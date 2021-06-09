@@ -384,7 +384,7 @@ static void signalHandler(int, siginfo_t* info, void*) {
     state.index = index;
 }
 
-static void registerHandler() {
+void registerHandler() {
     struct sigaction act = {};
     act.sa_sigaction = signalHandler;
     act.sa_flags = SA_SIGINFO;
