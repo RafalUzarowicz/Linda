@@ -288,11 +288,11 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
                 }
             }
         }
-        off_t currentPos = lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_END);
+        off_t currentPos = lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_CUR);
         if(currentPos == 0) {
             break;
         }
-        lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_END);
+        lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_CUR);
     }
     lock.l_type = F_UNLCK;
     if (fcntl(fd, F_SETLKW, &lock) == -1) {
