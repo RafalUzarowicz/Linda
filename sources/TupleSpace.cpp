@@ -250,7 +250,7 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
         return;
     }
 
-    lseek(fd, -(long)(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_END);
+    lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_END);
     while (::read(fd, buffer, Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE) > 0) {
         unsigned char type = buffer[0];
         if (type == Linda::READ_FLAG || type == Linda::INPUT_FLAG) {
