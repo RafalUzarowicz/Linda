@@ -4,6 +4,8 @@
 #include <chrono>
 #include <csignal>
 
+#include "ISerializable.h"
+
 namespace Linda {
     const static int SIGTUPLE = SIGUSR1;
     const static int32_t MAX_STRING_LENGTH = 64;
