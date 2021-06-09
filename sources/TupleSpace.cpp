@@ -416,7 +416,7 @@ static Linda::Tuple waitForIt(const Linda::Pattern& pattern, char type, std::chr
                 sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
                 break;
             }
-            bool rm_flag = type == Linda::READ_FLAG ? false : true;
+            bool rm_flag = type != Linda::READ_FLAG;
             Linda::Tuple t = get(pattern, state.tupleSpacePath, state.depth, state.index, rm_flag);
             if (t.size() > 0) {
                 sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
