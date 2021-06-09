@@ -122,7 +122,8 @@ std::vector<std::string> Linda::Pattern::all_paths() const {
 
 bool Linda::Pattern::check(const Linda::Tuple& tuple) const {
     if (tuple.size() > size() || treePath.str().find(tuple.path()) != 0) return false;
-    for (size_t i{}; i < tuple.size(); ++i) {
+    size_t i{};
+    for (; i < tuple.size(); ++i) {
         if (tuple[i].getType() == entries[i].getTupleType()) {
             switch (entries[i].getType()) {
                 case PatternEntryType::Equal:
@@ -144,6 +145,11 @@ bool Linda::Pattern::check(const Linda::Tuple& tuple) const {
                     break;
             }
         } else {
+            return false;
+        }
+    }
+    for (; i < size(); ++i) {
+        if (entries[i].getType() != PatternEntryType::Any) {
             return false;
         }
     }

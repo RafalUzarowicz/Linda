@@ -18,6 +18,19 @@ void glupieTesty(){
 
 void testyRafalaXd(){
 
+    Linda::Pattern pattern;
+    pattern.add<Linda::PatternEntryType::Equal>(100);
+    pattern.add<Linda::PatternEntryType::GreaterOrEqual>(4.0f);
+    pattern.add<Linda::PatternEntryType::Less>("ddd");
+
+
+    Linda::Tuple tuple;
+    tuple.push(100).push(4.0f);
+
+    std::cout<<STR_BOOL(pattern.check(tuple))<<'\n';
+
+
+
     std::cout<<Linda::Tuple()<<'\n';
     std::cout<<Linda::Pattern()<<'\n';
 
