@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <variant>
+#include <vector>
 #include "Tuple.h"
 #include "Pattern.h"
 #include "Exceptions.h"
@@ -322,4 +323,129 @@ TEST(PatternTest, SerializationDeserializationEmpty) {
 
     Linda::Pattern p2(p1.serialize());
     EXPECT_EQ(p1.to_string(), p2.to_string());
+}
+
+TEST(PatternTest, checkSimple) {
+    Linda::PatternEntryType types[] = {
+        Linda::PatternEntryType::Equal,
+        Linda::PatternEntryType::Less,
+        Linda::PatternEntryType::LessOrEqual,
+        Linda::PatternEntryType::Greater,
+        Linda::PatternEntryType::GreaterOrEqual,
+        Linda::PatternEntryType::Any
+    };
+    int arrSize = sizeof(types)/sizeof(Linda::PatternEntryType);
+    Linda::Pattern p = Linda::Pattern();
+    Linda::Tuple t = Linda::Tuple();
+
+    const bool expectedResultsForEqual[] = {true, false, true, false, true, true};
+    const bool expectedResultsForGreater[] = {false, false, false, true, true, true};
+    const bool expectedResultsForLess[] = {false, true, true, false, false, true};
+
+    // INT
+    std::vector<Linda::Pattern> patternsForInt;
+    for(int i=0; i<arrSize-1; i++){
+        p.add(types[i], 123);
+        patternsForInt.push_back(p);
+        p.clear();
+    }
+    p.add(Linda::PatternEntryType::Any, Linda::TupleEntryType::Int);
+    patternsForInt.push_back(p);
+    p.clear();
+
+    t.push(123);
+    for(int i=0; i<arrSize; i++){
+        EXPECT_EQ(patternsForInt.at(i).check(t), expectedResultsForEqual[i]);
+    }
+    t.clear();
+
+    t.push(124);
+    for(int i=0; i<arrSize; i++){
+        EXPECT_EQ(patternsForInt.at(i).check(t), expectedResultsForGreater[i]);
+    }
+    t.clear();
+
+    t.push(122);
+    for(int i=0; i<arrSize; i++){
+        EXPECT_EQ(patternsForInt.at(i).check(t), expectedResultsForLess[i]);
+    }
+    t.clear();
+
+    // FLOAT
+    std::vector<Linda::Pattern> patternsForFloat;
+    for(int i=1; i<arrSize-1; i++){
+        p.add(types[i], 5.0f);
+        patternsForFloat.push_back(p);
+        p.clear();
+    }
+    p.add(Linda::PatternEntryType::Any, Linda::TupleEntryType::Float);
+    patternsForFloat.push_back(p);
+    p.clear();
+
+    t.push(5.0f);
+    for(int i=1; i<arrSize; i++){
+        EXPECT_EQ(patternsForFloat.at(i-1).check(t), expectedResultsForEqual[i]);
+    }
+    t.clear();
+
+    t.push(5.1f);
+    for(int i=1; i<arrSize; i++){
+        EXPECT_EQ(patternsForFloat.at(i-1).check(t), expectedResultsForGreater[i]);
+    }
+    t.clear();
+
+    t.push(4.9f);
+    for(int i=1; i<arrSize; i++){
+        EXPECT_EQ(patternsForFloat.at(i-1).check(t), expectedResultsForLess[i]);
+    }
+    t.clear();
+
+    // STRING
+    std::vector<Linda::Pattern> patternsForString;
+    for(int i=0; i<arrSize-1; i++){
+        p.add(types[i], "ccc");
+        patternsForString.push_back(p);
+        p.clear();
+    }
+    p.add(Linda::PatternEntryType::Any, Linda::TupleEntryType::String);
+    patternsForString.push_back(p);
+    p.clear();
+
+    t.push("ccc");
+    for(int i=0; i<arrSize; i++){
+        EXPECT_EQ(patternsForString.at(i).check(t), expectedResultsForEqual[i]);
+    }
+    t.clear();
+
+    t.push("ccd");
+    for(int i=0; i<arrSize; i++){
+        EXPECT_EQ(patternsForString.at(i).check(t), expectedResultsForGreater[i]);
+    }
+    t.clear();
+
+    t.push("cca");
+    for(int i=0; i<arrSize; i++){
+        EXPECT_EQ(patternsForString.at(i).check(t), expectedResultsForLess[i]);
+    }
+    t.clear();
+}
+
+TEST(PatternTest, checkComplex) {
+    Linda::Pattern p = Linda::Pattern();
+
+    p.add(Linda::PatternEntryType::Equal, 100);
+    p.add(Linda::PatternEntryType::GreaterOrEqual, 4.0f);
+    p.add(Linda::PatternEntryType::Less, "ddd");
+    Linda::Tuple t1(Linda::Tuple().push(100).push(4.0f).push("aaa"));
+    Linda::Tuple t2(Linda::Tuple().push(100).push(3.0f).push("aaa"));
+    Linda::Tuple t3(Linda::Tuple().push(100).push(4.0f));
+    Linda::Tuple t4(Linda::Tuple().push(100).push(3.0f).push("aaa").push(1));
+    EXPECT_TRUE(p.check(t1));
+    EXPECT_FALSE(p.check(t2));
+    EXPECT_FALSE(p.check(t3));
+    EXPECT_FALSE(p.check(t4));
+
+    p.add(Linda::PatternEntryType::Any, Linda::TupleEntryType::Int);
+    p.add(Linda::PatternEntryType::Any, Linda::TupleEntryType::Float);
+    p.add(Linda::PatternEntryType::Any, Linda::TupleEntryType::String);
 }
