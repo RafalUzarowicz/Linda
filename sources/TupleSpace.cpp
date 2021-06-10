@@ -45,6 +45,8 @@ private:
     friend void signalHandler(int, siginfo_t* info, void*);
 
     friend Linda::Tuple waitForIt(const Linda::Pattern& pattern, char type, std::chrono::microseconds curr_timeout);
+
+    friend void Linda::disconnect();
 };
 
 static Linda::Tuple find(const Linda::Pattern& pattern, const std::string& file_path, bool remove) {
@@ -488,6 +490,11 @@ namespace Linda {
         }
     }
 
+    void disconnect(){
+        State& state = State::getInstance();
+        state.connected = false;
+    }
+
     void output(Tuple tuple) {
         if (tuple.size() == 0) {
             throw Linda::Exception::TupleSpaceException("Empty tuple");
@@ -500,8 +507,6 @@ namespace Linda {
         }
         State& state = State::getInstance();
 
-        //find file
-        //fixme can this cause process to hang?
         std::string filePath = state.tupleSpacePath + "/" + tuple.path() + ".linda";
         int flags = O_CREAT | O_RDWR;
         int fd = open(filePath.c_str(), flags, 0666);
