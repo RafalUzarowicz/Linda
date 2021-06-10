@@ -19,11 +19,14 @@ include_directories(headers)
 
 file(GLOB SOURCES CONFIGURE_DEPENDS "sources/*.cpp")
 
-add_executable(LINDA)
-target_sources(LINDA PRIVATE main.cpp ${SOURCES})
+add_executable(LINDA_MAIN)
+target_sources(LINDA_MAIN PRIVATE main.cpp ${SOURCES})
+
+add_library(Linda STATIC ${SOURCES})
 
 add_executable(RAFAL)
-target_sources(RAFAL PRIVATE tuple_pattern_test.cpp ${SOURCES})
+target_sources(RAFAL PRIVATE tuple_pattern_test.cpp)
+target_link_libraries(RAFAL Linda)
 
 add_executable(LINDA_TEST)
 target_sources(LINDA_TEST PRIVATE main_linda_test.cpp ${SOURCES})

@@ -11,6 +11,10 @@
 // - max tuple length limit
 // - limit tuples number in one file and proces entries too
 
+//TODO:
+// - bash script
+// - library creating cmake file
+
 #include "TupleSpace.h"
 
 
