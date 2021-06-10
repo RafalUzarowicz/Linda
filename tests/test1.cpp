@@ -432,20 +432,27 @@ TEST(PatternTest, checkSimple) {
 
 TEST(PatternTest, checkComplex) {
     Linda::Pattern p = Linda::Pattern();
-
+    Linda::Tuple t0 = Linda::Tuple();
+    EXPECT_TRUE(p.check(t0));
     p.add(Linda::PatternEntryType::Equal, 100);
     p.add(Linda::PatternEntryType::GreaterOrEqual, 4.0f);
     p.add(Linda::PatternEntryType::Less, "ddd");
     Linda::Tuple t1(Linda::Tuple().push(100).push(4.0f).push("aaa"));
     Linda::Tuple t2(Linda::Tuple().push(100).push(3.0f).push("aaa"));
     Linda::Tuple t3(Linda::Tuple().push(100).push(4.0f));
-    Linda::Tuple t4(Linda::Tuple().push(100).push(3.0f).push("aaa").push(1));
+    Linda::Tuple t4(Linda::Tuple().push(100).push(5.0f).push("aaa").push(1));
     EXPECT_TRUE(p.check(t1));
     EXPECT_FALSE(p.check(t2));
     EXPECT_FALSE(p.check(t3));
     EXPECT_FALSE(p.check(t4));
-
     p.add(Linda::PatternEntryType::Any, Linda::TupleEntryType::Int);
     p.add(Linda::PatternEntryType::Any, Linda::TupleEntryType::Float);
     p.add(Linda::PatternEntryType::Any, Linda::TupleEntryType::String);
+    EXPECT_TRUE(p.check(t1));
+    EXPECT_TRUE(p.check(t4));
+    p.add(Linda::PatternEntryType::Less, 100);
+    EXPECT_FALSE(p.check(t1));
+    EXPECT_FALSE(p.check(t4));
+    t4.push(6.0f).push("test").push(99);
+    EXPECT_TRUE(p.check(t4));
 }
