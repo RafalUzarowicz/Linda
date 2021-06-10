@@ -49,7 +49,7 @@ private:
     friend void Linda::disconnect();
 };
 
-static Linda::Tuple find(const Linda::Pattern& pattern, const std::string& file_path, bool remove) {
+Linda::Tuple find(const Linda::Pattern& pattern, const std::string& file_path, bool remove) {
     int fd = open(file_path.c_str(), O_CREAT | O_RDWR, 0666);
     if (fd < 0) {
         std::string errno_msg = strerror(errno);
@@ -252,7 +252,7 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
         return;
     }
 
-    lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_END);
+    lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_END);
     while (::read(fd, buffer, Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE) > 0) {
         unsigned char type = buffer[0];
         if (type == Linda::READ_FLAG || type == Linda::INPUT_FLAG) {
@@ -290,11 +290,11 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
                 }
             }
         }
-        off_t currentPos = lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_CUR);
+        off_t currentPos = lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_CUR);
         if(currentPos == 0) {
             break;
         }
-        lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_CUR);
+        lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_CUR);
     }
     lock.l_type = F_UNLCK;
     if (fcntl(fd, F_SETLKW, &lock) == -1) {

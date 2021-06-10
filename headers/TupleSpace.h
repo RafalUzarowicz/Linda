@@ -15,6 +15,7 @@
 #include "Pattern.h"
 
 void registerHandler();
+Linda::Tuple find(const Linda::Pattern& pattern, const std::string& file_path, bool remove);
 
 namespace Linda {
 

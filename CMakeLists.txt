@@ -35,7 +35,7 @@ add_executable(ALL_TEST)
 target_sources(ALL_TEST PRIVATE test_everything.cpp ${SOURCES})
 
 add_executable(GOOGLE_TEST)
-target_sources(GOOGLE_TEST PRIVATE tests/test1.cpp tests/test2.cpp ${SOURCES})
+target_sources(GOOGLE_TEST PRIVATE tests/test1.cpp tests/test2.cpp tests/test3.cpp ${SOURCES})
 target_link_libraries(GOOGLE_TEST gtest_main)
 
 include(GoogleTest)

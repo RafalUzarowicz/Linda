@@ -1,0 +1,89 @@
+//
+// Created by Łukasz Pokorzyński on 10.06.2021.
+//
+
+#include <gtest/gtest.h>
+#include "Tuple.h"
+#include "Pattern.h"
+#include "Exceptions.h"
+#include "TupleSpace.h"
+#include "Linda.h"
+
+TEST(OutputTest, Output) {
+    Linda::create();
+    Linda::connect();
+
+    Linda::Tuple t1;
+    Linda::Pattern p1;
+    p1.add(Linda::PatternEntryType::Equal, 12);
+    t1.push(12);
+    Linda::output(t1);
+    ASSERT_EQ(find(p1, "tuplespace/i.linda", false).to_string(), t1.to_string());
+
+    Linda::Tuple t2;
+    Linda::Pattern p2;
+    p2.add(Linda::PatternEntryType::GreaterOrEqual, 4.0f);
+    t2.push(4.0f);
+    Linda::output(t2);
+    ASSERT_EQ(find(p2, "tuplespace/f.linda", false).to_string(), t2.to_string());
+
+    Linda::Tuple t3;
+    Linda::Pattern p3;
+    p3.add(Linda::PatternEntryType::Equal, "Tak");
+    t3.push("Tak");
+    Linda::output(t3);
+    ASSERT_EQ(find(p3, "tuplespace/s.linda", false).to_string(), t3.to_string());
+}
+
+TEST(OutputTest, OutputTooBigTuple) {
+    Linda::create();
+    Linda::connect();
+
+    Linda::Tuple t;
+    for(int i = 0; i < 8; i++)
+        t.push("testestestestestestestestsetsetsetestestestestestesttestestestestestestest");
+
+    ASSERT_THROW(Linda::output(t), Linda::Exception::TupleSpaceException);
+}
+
+TEST(OutputTest, OutputEmpty) {
+    Linda::create();
+    Linda::connect();
+
+    Linda::Tuple t;
+    ASSERT_THROW(Linda::output(t), Linda::Exception::TupleSpaceException);
+}
+
+TEST(ReadTests, SimpleRead) {
+    Linda::create();
+    Linda::connect();
+
+    Linda::Pattern p1;
+    p1.add<Linda::PatternEntryType::Equal>(12);
+    ASSERT_EQ(Linda::read(p1).to_string(), "(i:12)");
+
+    Linda::Pattern p2;
+    p2.add<Linda::PatternEntryType::GreaterOrEqual>(4.0f);
+    ASSERT_EQ(Linda::read(p2).to_string(), "(f:4.0)");
+
+    Linda::Pattern p3;
+    p3.add<Linda::PatternEntryType::Equal>("Tak");
+    ASSERT_EQ(Linda::read(p3).to_string(), "(s:\"Tak\")");
+}
+
+TEST(InputTests, SimpleInput) {
+    Linda::create();
+    Linda::connect();
+
+    Linda::Pattern right;
+    right.add<Linda::PatternEntryType::Equal>(12);
+    ASSERT_EQ(Linda::input(right).to_string(), "(i:12)");
+
+    Linda::Pattern p2;
+    p2.add<Linda::PatternEntryType::GreaterOrEqual>(4.0f);
+    ASSERT_EQ(Linda::input(p2).to_string(), "(f:4.0)");
+
+    Linda::Pattern p3;
+    p3.add<Linda::PatternEntryType::Equal>("Tak");
+    ASSERT_EQ(Linda::input(p3).to_string(), "(s:\"Tak\")");
+}
