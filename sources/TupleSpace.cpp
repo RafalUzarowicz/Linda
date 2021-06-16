@@ -32,7 +32,7 @@ private:
     int depth;
     int index;
 
-    friend void Linda::create(bool, const std::string&, const std::string&);
+    friend void Linda::create(const std::string&, const std::string&, bool);
 
     friend void Linda::connect(const std::string&);
 
@@ -419,7 +419,6 @@ static Linda::Tuple waitForIt(const Linda::Pattern& pattern, char type, std::chr
     memset(&siginfo, 0, sizeof(siginfo_t));
 
     while (true) {
-        std::cout << "Sleeping" << std::endl;
         auto used_time = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::system_clock::now() - begin_t);
         std::chrono::microseconds timeout = curr_timeout - used_time;
@@ -447,6 +446,8 @@ static Linda::Tuple waitForIt(const Linda::Pattern& pattern, char type, std::chr
             }
             enqueue(pattern, state.tupleSpacePath + "/" + path + "-queue.linda", type);
             sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
+        }else{
+            break;
         }
     }
     return Linda::Tuple();
@@ -454,7 +455,7 @@ static Linda::Tuple waitForIt(const Linda::Pattern& pattern, char type, std::chr
 
 namespace Linda {
 
-    void create(bool no_exist_err, const std::string& path, const std::string& name) {
+    void create(const std::string& path, const std::string& name, bool no_exist_err) {
         const std::filesystem::path tuplespace_path{path + "/" + name};
 
         if (std::filesystem::exists(tuplespace_path)) {
