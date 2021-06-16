@@ -270,7 +270,7 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
             Linda::Pattern p;
             p.deserialize(tuple_vec);
             if (p.check(tuple)) {
-                lseek(fd, -static_cast<long>(Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE), SEEK_CUR);
+                lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_CUR);
                 unsigned char flag = Linda::EMPTY_FLAG;
                 if (write(fd, &flag, sizeof(flag)) < 0) {
                     lock.l_type = F_UNLCK;
