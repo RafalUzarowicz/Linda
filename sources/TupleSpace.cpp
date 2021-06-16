@@ -89,7 +89,7 @@ Linda::Tuple find(const Linda::Pattern& pattern, const std::string& file_path, b
             if (pattern.check(t)) {
                 if (remove) {
                     //go back one record
-                    lseek(fd, -Linda::ENTRY_SIZE, SEEK_CUR);
+                    lseek(fd, -(long)Linda::ENTRY_SIZE, SEEK_CUR);
                     //set flag to empty
                     char busy = Linda::EMPTY_FLAG;
                     write(fd, &busy, sizeof(char));
