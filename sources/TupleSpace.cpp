@@ -223,7 +223,6 @@ static void dequeue(const std::vector<std::string>& queue_paths) {
 }
 
 static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int depth, int idx) {
-    //todo search queue from the end of file
     int fd = open(path.c_str(), O_RDWR | O_CREAT, 0666);
     if (fd < 0) {
         throw Linda::Exception::TupleSpaceException("Could not open queue file.");

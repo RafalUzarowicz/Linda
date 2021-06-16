@@ -44,6 +44,17 @@ TEST(OutputTest, Output) {
     t4.push("Tak");
     Linda::output(t4);
     ASSERT_EQ(find(p4, "tuplespace/ifs.linda", false).to_string(), t4.to_string());
+
+    Linda::Tuple t5;
+    Linda::Pattern p5;
+    p5.add(Linda::PatternEntryType::Equal, 12);
+    p5.add(Linda::PatternEntryType::GreaterOrEqual, 4.0f);
+    p5.add(Linda::PatternEntryType::Equal, "Nie");
+    t5.push(12);
+    t5.push(4.0f);
+    t5.push("Nie");
+    Linda::output(t5);
+    ASSERT_EQ(find(p5, "tuplespace/ifs.linda", false).to_string(), t5.to_string());
 }
 
 TEST(OutputTest, OutputTooBigTuple) {
@@ -88,6 +99,17 @@ TEST(ReadTest, SimpleRead) {
     ASSERT_EQ(Linda::read(p4).to_string(), "(i:12, f:4.0, s:\"Tak\")");
 }
 
+TEST(ReadTest, AnyRead) {
+    Linda::create();
+    Linda::connect();
+
+    Linda::Pattern p1;
+    p1.add(Linda::PatternEntryType::Equal,12);
+    p1.add(Linda::PatternEntryType::GreaterOrEqual, 4.0f);
+    p1.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::String);
+    ASSERT_EQ(Linda::read(p1).to_string(), "(i:12, f:4.0, s:\"Tak\")");
+}
+
 TEST(ReadTest, ReadTooBigPattern) {
     Linda::create();
     Linda::connect();
@@ -128,6 +150,17 @@ TEST(InputTest, SimpleInput) {
     p4.add(Linda::PatternEntryType::GreaterOrEqual, 4.0f);
     p4.add(Linda::PatternEntryType::Equal, "Tak");
     ASSERT_EQ(Linda::input(p4).to_string(), "(i:12, f:4.0, s:\"Tak\")");
+}
+
+TEST(InputTest, AnyInput) {
+    Linda::create();
+    Linda::connect();
+
+    Linda::Pattern p1;
+    p1.add(Linda::PatternEntryType::Equal,12);
+    p1.add(Linda::PatternEntryType::GreaterOrEqual, 4.0f);
+    p1.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::String);
+    ASSERT_EQ(Linda::read(p1).to_string(), "(i:12, f:4.0, s:\"Nie\")");
 }
 
 TEST(InputTest, InputTooBigPattern) {
