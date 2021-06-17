@@ -32,7 +32,7 @@ private:
     int depth;
     int index;
 
-    friend void Linda::create(bool, const std::string&, const std::string&);
+    friend void Linda::create(const std::string&, const std::string&, bool);
 
     friend void Linda::connect(const std::string&);
 
@@ -89,7 +89,7 @@ Linda::Tuple find(const Linda::Pattern& pattern, const std::string& file_path, b
             if (pattern.check(t)) {
                 if (remove) {
                     //go back one record
-                    lseek(fd, -Linda::ENTRY_SIZE, SEEK_CUR);
+                    lseek(fd, -static_cast<long>(Linda::ENTRY_SIZE), SEEK_CUR);
                     //set flag to empty
                     char busy = Linda::EMPTY_FLAG;
                     write(fd, &busy, sizeof(char));
@@ -116,10 +116,10 @@ Linda::Tuple find(const Linda::Pattern& pattern, const std::string& file_path, b
 }
 
 static void enqueue(Linda::Pattern pattern, const std::string& file_path, const char& type) {
-    //todo add process entry to first empty space
     pid_t pid = getpid();
     auto serialized_pattern = pattern.serialize();
     unsigned char buffer[Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE + 1];
+    unsigned char readBuffer[Linda::LIST_ENTRY_SIZE];
     memset(buffer, (int) '-', Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE + 1);
 
     buffer[0] = type;
@@ -129,7 +129,7 @@ static void enqueue(Linda::Pattern pattern, const std::string& file_path, const 
     }
     buffer[Linda::LIST_HEADER_SIZE + Linda::MAX_TUPLE_SIZE] = '\n'; //for readability
 
-    int queue_fd = open(file_path.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
+    int queue_fd = open(file_path.c_str(), O_CREAT | O_RDWR, 0666);
     if (queue_fd < 0) {
         std::string errno_msg = strerror(errno);
         throw Linda::Exception::TupleSpaceException("Error when opening queue file. " + errno_msg);
@@ -146,7 +146,19 @@ static void enqueue(Linda::Pattern pattern, const std::string& file_path, const 
         std::string errno_msg = strerror(errno);
         throw Linda::Exception::TupleSpaceException("Could not acquire queue file lock. " + errno_msg);
     }
-    auto written = write(queue_fd, buffer, Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE + 1);
+    ssize_t written = 0;
+    while (::read(queue_fd, readBuffer, Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE + 1) > 0) {
+        unsigned char entryType = readBuffer[0];
+        if(entryType == Linda::EMPTY_FLAG) {
+            lseek(queue_fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_CUR);
+            written = write(queue_fd, buffer, Linda::LIST_ENTRY_SIZE);
+            break;
+        }
+    }
+    if(written == 0) {
+        lseek(queue_fd, 0, SEEK_END);
+        written = write(queue_fd, buffer, Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE + 1);
+    }
     if (written < 0) {
         lock.l_type = F_UNLCK;
         if (fcntl(queue_fd, F_SETLKW, &lock) == -1) {
@@ -251,8 +263,8 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
         return;
     }
 
-    lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_END);
-    while (::read(fd, buffer, Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE) > 0) {
+    //lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_END);
+    while (::read(fd, buffer, Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE + 1) > 0) {
         unsigned char type = buffer[0];
         if (type == Linda::READ_FLAG || type == Linda::INPUT_FLAG) {
             pid_t pid;
@@ -289,11 +301,13 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
                 }
             }
         }
+        /*
         off_t currentPos = lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_CUR);
         if(currentPos == 0) {
             break;
         }
         lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_CUR);
+         */
     }
     lock.l_type = F_UNLCK;
     if (fcntl(fd, F_SETLKW, &lock) == -1) {
@@ -351,7 +365,7 @@ static Linda::Tuple get(const Linda::Pattern& pattern, const std::string& tuple_
             t.deserialize(tuple_vec);
             if (pattern.check(t)) {
                 if (remove) {
-                    lseek(fd, -static_cast<long>( Linda::ENTRY_SIZE), SEEK_CUR);
+                    lseek(fd, -static_cast<long>(Linda::ENTRY_SIZE), SEEK_CUR);
                     if (write(fd, &Linda::EMPTY_FLAG, sizeof(Linda::EMPTY_FLAG)) < 0) {
                         lock.l_type = F_UNLCK;
                         if (fcntl(fd, F_SETLKW, &lock) == -1) {
@@ -419,7 +433,6 @@ static Linda::Tuple waitForIt(const Linda::Pattern& pattern, char type, std::chr
     memset(&siginfo, 0, sizeof(siginfo_t));
 
     while (true) {
-        std::cout << "Sleeping" << std::endl;
         auto used_time = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::system_clock::now() - begin_t);
         std::chrono::microseconds timeout = curr_timeout - used_time;
@@ -447,6 +460,8 @@ static Linda::Tuple waitForIt(const Linda::Pattern& pattern, char type, std::chr
             }
             enqueue(pattern, state.tupleSpacePath + "/" + path + "-queue.linda", type);
             sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
+        }else{
+            break;
         }
     }
     return Linda::Tuple();
@@ -454,7 +469,7 @@ static Linda::Tuple waitForIt(const Linda::Pattern& pattern, char type, std::chr
 
 namespace Linda {
 
-    void create(bool no_exist_err, const std::string& path, const std::string& name) {
+    void create(const std::string& path, const std::string& name, bool no_exist_err) {
         const std::filesystem::path tuplespace_path{path + "/" + name};
 
         if (std::filesystem::exists(tuplespace_path)) {

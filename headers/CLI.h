@@ -16,14 +16,16 @@ namespace Linda{
         std::string line;
         std::string line_cpy;
 
-        bool handle_create();
-        bool handle_connect();
-        bool handle_tuple();
-        bool handle_pattern();
-        bool handle_operations();
-        void print_help();
+        bool handleCreate();
+        bool handleConnect();
+        bool handleTuple();
+        bool handlePattern();
+        bool handleOperations();
+        static void printHelp();
         void reset();
         void tokenize();
+        void show();
+        PatternEntryType parsePatternEntry();
     };
 }
 

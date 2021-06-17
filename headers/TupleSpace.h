@@ -19,7 +19,7 @@ Linda::Tuple find(const Linda::Pattern& pattern, const std::string& file_path, b
 
 namespace Linda {
 
-    void create(bool = true, const std::string& = DEFAULT_TUPLESPACE_DIR, const std::string& = DEFAULT_TUPLESPACE_NAME);
+    void create(const std::string& = DEFAULT_TUPLESPACE_DIR, const std::string& = DEFAULT_TUPLESPACE_NAME, bool = true);
 
     void connect(const std::string& = DEFAULT_TUPLESPACE_PATH);
 
