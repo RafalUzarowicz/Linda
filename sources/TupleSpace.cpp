@@ -263,7 +263,6 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
         return;
     }
 
-    //lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_END);
     while (::read(fd, buffer, Linda::MAX_TUPLE_SIZE + Linda::LIST_HEADER_SIZE + 1) > 0) {
         unsigned char type = buffer[0];
         if (type == Linda::READ_FLAG || type == Linda::INPUT_FLAG) {
@@ -301,13 +300,6 @@ static void searchQueue(const Linda::Tuple& tuple, const std::string& path, int 
                 }
             }
         }
-        /*
-        off_t currentPos = lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_CUR);
-        if(currentPos == 0) {
-            break;
-        }
-        lseek(fd, -static_cast<long>(Linda::LIST_ENTRY_SIZE), SEEK_CUR);
-         */
     }
     lock.l_type = F_UNLCK;
     if (fcntl(fd, F_SETLKW, &lock) == -1) {
@@ -599,7 +591,7 @@ namespace Linda {
         searchQueue(tuple, queue_path, tuple.size(), idx);
     }
 
-    //to jest usuwające
+    //deleting option
     Tuple input(Pattern pattern, std::chrono::microseconds timeout) {
         registerHandler();
         std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
@@ -621,7 +613,7 @@ namespace Linda {
                 std::string node_path = state.tupleSpacePath + "/" + path + ".linda";
                 Tuple t = find(pattern, node_path, true);
                 if (t.size() > 0) {
-                    //tuple found, remove from all kłełełes and return
+                    //tuple found, remove from all queues and return
                     dequeue(enqeued_in);
                     return t;
                 }
@@ -630,9 +622,8 @@ namespace Linda {
                 enqeued_in.push_back(queue_path);
             }
         } catch (const Linda::Exception::TupleSpaceException& ex) {
-            //todo remove process from kłełełes and re-throw exception?
             dequeue(enqeued_in);
-            throw ex;   //todo nie wiem czy to na pewno tak jak się powinno to robić
+            throw ex;
         }
 
         std::chrono::microseconds used_time = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -640,7 +631,7 @@ namespace Linda {
         return waitForIt(pattern, Linda::INPUT_FLAG, timeout - used_time);
     }
 
-    //to jest nieusuwające
+    //non-deleting option
     Tuple read(Pattern pattern, std::chrono::microseconds timeout) {
         registerHandler();
         std::chrono::time_point<std::chrono::system_clock> begin_t = std::chrono::system_clock::now();
@@ -662,7 +653,7 @@ namespace Linda {
                 std::string node_path = state.tupleSpacePath + "/" + path + ".linda";
                 Tuple t = find(pattern, node_path, false);
                 if (t.size() > 0) {
-                    //tuple found, remove from kłełełes and return
+                    //tuple found, remove from all queues and return
                     dequeue(enqeued_in);
                     return t;
                 }
@@ -671,9 +662,8 @@ namespace Linda {
                 enqeued_in.push_back(queue_path);
             }
         } catch (const Linda::Exception::TupleSpaceException& ex) {
-            //todo remove process from kłełełes and re-throw exception?
             dequeue(enqeued_in);
-            throw ex;   //todo nie wiem czy to na pewno tak jak się powinno to robić
+            throw ex;
         }
         std::chrono::microseconds used_time = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now() - begin_t);

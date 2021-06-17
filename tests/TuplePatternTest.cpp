@@ -103,7 +103,6 @@ TEST(TupleTest, SerializationDeserializationEmpty) {
     Linda::Tuple t2(t1.serialize());
     EXPECT_EQ(t1.to_string(), t2.to_string());
 }
-//TODO: Tuple exceptions
 
 // PATTERN TESTS
 TEST(PatternTest, Any) {

@@ -93,10 +93,6 @@ bool Linda::CLI::handleTuple(){
 }
 
 bool Linda::CLI::handlePattern(){
-    //todo
-    // - check if token[1] contains a valid pattern type
-    // - parse token[2] value
-    // - add to pattern
     if(tokens[0]!= "pattern") return false;
     if(tokens.size()!=3){
         std::cout<<"Pattern operation requires two arguments"<<std::endl;
