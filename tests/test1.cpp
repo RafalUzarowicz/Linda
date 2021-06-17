@@ -131,55 +131,17 @@ TEST(PatternTest, AnyExceptionsGetValue) {
     pattern.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::Int);
     pattern.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::Float);
 
-    for(auto& p : pattern.getPatterns()){
-        try {
-            p.getValue();
-            FAIL() << "Expected AnyException";
-        }
-        catch(Linda::Exception::Pattern::AnyException const & err) {
-            EXPECT_EQ(err.what(), std::string("PatternEntryType::Any doesn't have any value!"));
-        }
-        catch(...) {
-            FAIL() << "Expected AnyException";
-        }
-    }
+    for(auto& p : pattern.getPatterns())
+        ASSERT_THROW(p.getValue(), Linda::Exception::Pattern::AnyException);
+    
 }
 
 TEST(PatternTest, AnyExceptionsSetValue) {
     Linda::Pattern pattern;
 
-    try {
-        pattern.add<Linda::PatternEntryType::Any>(2);
-        FAIL() << "Expected AnyException";
-    }
-    catch(Linda::Exception::Pattern::AnyException const & err) {
-        EXPECT_EQ(err.what(), std::string("Can't use Any with specific value."));
-    }
-    catch(...) {
-        FAIL() << "Expected AnyException";
-    }
-
-    try {
-        pattern.add<Linda::PatternEntryType::Any>(2.0f);
-        FAIL() << "Expected AnyException";
-    }
-    catch(Linda::Exception::Pattern::AnyException const & err) {
-        EXPECT_EQ(err.what(), std::string("Can't use Any with specific value."));
-    }
-    catch(...) {
-        FAIL() << "Expected AnyException";
-    }
-
-    try {
-        pattern.add<Linda::PatternEntryType::Any>("test");
-        FAIL() << "Expected AnyException";
-    }
-    catch(Linda::Exception::Pattern::AnyException const & err) {
-        EXPECT_EQ(err.what(), std::string("Can't use Any with specific value."));
-    }
-    catch(...) {
-        FAIL() << "Expected AnyException";
-    }
+    ASSERT_THROW(pattern.add<Linda::PatternEntryType::Any>(2), Linda::Exception::Pattern::AnyException);
+    ASSERT_THROW(pattern.add<Linda::PatternEntryType::Any>(2.0f), Linda::Exception::Pattern::AnyException);
+    ASSERT_THROW(pattern.add<Linda::PatternEntryType::Any>("test"), Linda::Exception::Pattern::AnyException);
 }
 
 TEST(PatternTest, Inequal) {
