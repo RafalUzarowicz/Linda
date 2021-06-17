@@ -160,7 +160,7 @@ TEST(InputTest, AnyInput) {
     p1.add(Linda::PatternEntryType::Equal,12);
     p1.add(Linda::PatternEntryType::GreaterOrEqual, 4.0f);
     p1.add<Linda::PatternEntryType::Any>(Linda::TupleEntryType::String);
-    ASSERT_EQ(Linda::input(p1).to_string(), "(i:12, f:4.0, s:\"Nie\")");
+    ASSERT_TRUE(p1.check(Linda::input(p1)));
 }
 
 TEST(InputTest, InputTooBigPattern) {
